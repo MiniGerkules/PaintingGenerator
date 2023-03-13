@@ -10,6 +10,8 @@ namespace PaintingsGenerator.Images {
         public static readonly PixelFormat FORMAT = PixelFormats.Rgb24;
         public static readonly int BYTES_PER_PIXEL = (FORMAT.BitsPerPixel + 7) / 8;
 
+        private Stroke<RGBColor>? lastStroke = null;
+
         #region Constructors
         private RGBImage(int width, int height) : base(new RGBColor[height, width]) {
         }

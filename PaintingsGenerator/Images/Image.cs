@@ -11,8 +11,6 @@ namespace PaintingsGenerator.Images {
             set => pixels[i, j] = value;
         }
 
-        protected Stroke<PixelColor>? lastStroke = null;
-
         public Image(PixelColor[,] pixels) {
             this.pixels = pixels;
         }
