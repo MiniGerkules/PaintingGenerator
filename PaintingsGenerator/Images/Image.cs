@@ -2,13 +2,13 @@
 
 namespace PaintingsGenerator.Images {
     public abstract class Image<PixelColor> {
-        protected readonly PixelColor[,] pixels;
+        private readonly PixelColor[,] pixels;
 
         public int Height => pixels.GetLength(0);
         public int Width => pixels.GetLength(1);
         public PixelColor this[int i, int j] {
             get => pixels[i, j];
-            set => pixels[i, j] = value;
+            protected set => pixels[i, j] = value;
         }
 
         public Image(PixelColor[,] pixels) {
