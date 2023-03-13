@@ -66,7 +66,18 @@ namespace PaintingsGenerator.Images {
 
         public override void AddStroke(Stroke<RGBColor> stroke) {
             lastStroke = stroke;
-            throw new NotImplementedException();
+
+            foreach (var pos in stroke.Positions) {
+                int newRed = this[pos.Y, pos.X].Red + stroke.Color.Red;
+                int newGreen = this[pos.Y, pos.X].Green + stroke.Color.Green;
+                int newBlue = this[pos.Y, pos.X].Blue + stroke.Color.Blue;
+
+                byte realRed = (byte)Math.Min(newRed, byte.MaxValue);
+                byte realGreen = (byte)Math.Min(newGreen, byte.MaxValue);
+                byte realBlue = (byte)Math.Min(newBlue, byte.MaxValue);
+
+                this[pos.Y, pos.X] = new(realRed, realGreen, realBlue);
+            }
         }
 
         public StrokePositions GetStroke(Gradient gradient, Position pos, uint height) {

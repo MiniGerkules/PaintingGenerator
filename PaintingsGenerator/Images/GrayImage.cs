@@ -1,4 +1,6 @@
-﻿using PaintingsGenerator.Colors;
+﻿using System;
+
+using PaintingsGenerator.Colors;
 using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator.Images {
@@ -12,7 +14,10 @@ namespace PaintingsGenerator.Images {
         }
 
         public override void AddStroke(Stroke<GrayColor> stroke) {
-            throw new System.NotImplementedException();
+            foreach (var pos in stroke.Positions) {
+                int newVal = this[pos.Y, pos.X].Gray + stroke.Color.Gray;
+                this[pos.Y, pos.X] = new((byte)Math.Min(newVal, byte.MaxValue));
+            }
         }
     }
 }
