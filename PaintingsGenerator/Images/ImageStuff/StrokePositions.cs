@@ -1,5 +1,17 @@
-﻿namespace PaintingsGenerator.Images.ImageStuff {
-    public class StrokePositions {
-        public readonly Position[] positions;
+﻿using System.Collections;
+using System.Collections.Generic;
+
+namespace PaintingsGenerator.Images.ImageStuff {
+    public class StrokePositions : IEnumerable<Position>{
+        private readonly List<Position> positions = new();
+
+        public void Add(Position position) => positions.Add(position);
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public IEnumerator<Position> GetEnumerator() {
+            foreach (var pos in positions)
+                yield return pos;
+        }
     }
 }
