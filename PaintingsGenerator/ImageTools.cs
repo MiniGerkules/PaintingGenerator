@@ -27,13 +27,6 @@ namespace PaintingsGenerator {
 
             return posWithMaxDiff;
         }
-
-        private static double GetDifference(RGBImage a, RGBImage b, Position pos, uint height) {
-            var partA = RGBImage.GetPart(a, pos, height);
-            var partB = RGBImage.GetPart(b, pos, height);
-
-            return RGBImage.GetDifference(partA, partB);
-        }
         #endregion
 
         #region Gray

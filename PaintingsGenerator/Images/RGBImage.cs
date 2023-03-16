@@ -8,6 +8,17 @@ using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator.Images {
     internal class RGBImage : Image<RGBColor> {
+        private record class RGBImagePart(RGBImage FullImagePixels,
+                                          Position LeftUp, Position RightDown) {
+            public int Width => RightDown.X - LeftUp.X;
+            public int Height => RightDown.Y - LeftUp.Y;
+            public ulong Size => (ulong)Width * (ulong)Height;
+
+            public RGBColor this[int i, int j] {
+                get => FullImagePixels[i + LeftUp.Y, j + LeftUp.X];
+            }
+        }
+
         public static readonly PixelFormat FORMAT = PixelFormats.Rgb24;
         public static readonly int BYTES_PER_PIXEL = (FORMAT.BitsPerPixel + 7) / 8;
 
@@ -117,6 +128,36 @@ namespace PaintingsGenerator.Images {
                 throw new Exception("Unsupported pixel encoding format!");
         }
 
+        public static double GetDifference(RGBImage a, RGBImage b) {
+            var partA = new RGBImagePart(a, new(0, 0), new(a.Height - 1, a.Width - 1));
+            var partB = new RGBImagePart(b, new(0, 0), new(b.Height - 1, b.Width - 1)); ;
+
+            return GetDifference(partA, partB);
+        }
+
+        public static double GetDifference(RGBImage a, RGBImage b, Position pos, uint height) {
+            var partA = GetPart(a, pos, height);
+            var partB = GetPart(b, pos, height);
+
+            return GetDifference(partA, partB);
+        }
+
+        private static double GetDifference(RGBImagePart a, RGBImagePart b) {
+            if (a.Width != b.Width || a.Height != b.Height)
+                throw new Exception("Images must be the same size!");
+
+            ulong diff = 0;
+            for (int y = 0; y < a.Height; ++y) {
+                for (int x = 0; x < a.Width; ++x) {
+                    diff += (ulong)Math.Abs(a[y, x].Red - b[y, x].Red);
+                    diff += (ulong)Math.Abs(a[y, x].Green - b[y, x].Green);
+                    diff += (ulong)Math.Abs(a[y, x].Blue - b[y, x].Blue);
+                }
+            }
+
+            return (double)diff / (a.Height * a.Width);
+        }
+
         /// <summary>
         /// Extract a part of image from `image` in position `pos` and size of
         /// side of square == 2*radius + 1
@@ -126,7 +167,7 @@ namespace PaintingsGenerator.Images {
         /// <param name="height"> Height from center square to its side </param>
         /// <returns> Part of image </returns>
         /// <exception cref="Exception"> If `pos` don't lie in image bounds </exception>
-        public static RGBImage GetPart(RGBImage image, Position pos, uint height) {
+        private static RGBImagePart GetPart(RGBImage image, Position pos, uint height) {
             if (pos.X >= image.Width || pos.Y >= image.Height || pos.X < 0 || pos.Y < 0)
                 throw new Exception("Can't get data from the required position!");
 
@@ -140,23 +181,6 @@ namespace PaintingsGenerator.Images {
             if (pos.Y < image.Height - 1 - height) rightDown.Y = pos.X + (int)height;
 
             return new(image, leftUp, rightDown);
-        }
-
-        public static double GetDifference(RGBImage a, RGBImage b) {
-            if (a.Width != b.Width || a.Height != b.Height)
-                throw new Exception("Images must be the same size!");
-
-            ulong diff = 0;
-
-            for (int y = 0; y < a.Height; ++y) {
-                for (int x = 0; x < a.Width; ++x) {
-                    diff += (ulong)Math.Abs(a[y, x].Red - b[y, x].Red);
-                    diff += (ulong)Math.Abs(a[y, x].Green - b[y, x].Green);
-                    diff += (ulong)Math.Abs(a[y, x].Blue - b[y, x].Blue);
-                }
-            }
-
-            return (double)diff / (a.Height * a.Width);
         }
         #endregion
 
