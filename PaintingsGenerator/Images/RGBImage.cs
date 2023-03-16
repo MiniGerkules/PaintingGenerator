@@ -87,14 +87,6 @@ namespace PaintingsGenerator.Images {
             }
         }
 
-        public StrokePositions GetStroke(Gradient gradient, Position pos, uint height) {
-            // Как получить градиент?
-            // Как ему следовать?
-
-            // 1) Получить мазок в соответствии с градиентом и максимальной допустимой ошибкой
-            throw new NotImplementedException();
-        }
-
         public void RemoveLastStroke() {
             if (lastStrokePositions == null) return;
 
