@@ -2,6 +2,7 @@
 using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Images;
+using PaintingsGenerator.MathStuff;
 
 namespace PaintingsGenerator {
     internal class ImageProcessor {
@@ -25,9 +26,9 @@ namespace PaintingsGenerator {
                 curDiff = RGBImage.GetDifference(template, rgbPainting);
 
                 var posWithMaxDiff = ImageTools.FindPosWithTheHighestDiff(template, rgbPainting, height);
-                var gradient = ImageTools.GetGradient(grayPainting);
-                var strokePos = template.GetStroke(gradient, posWithMaxDiff, height);
-                var rgbColor = template.GetColor(strokePos);
+                var gradient = Gradient.GetGradient(grayPainting);
+                var strokePos = ImageTools.GetStroke(template, gradient, posWithMaxDiff, height);
+                var rgbColor = template.GetColor(strokePos, height);
 
                 rgbPainting.AddStroke(new(strokePos, rgbColor));
                 var newDiff = RGBImage.GetDifference(template, rgbPainting);
