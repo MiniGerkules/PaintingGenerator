@@ -95,11 +95,6 @@ namespace PaintingsGenerator.Images {
             throw new NotImplementedException();
         }
 
-        public RGBColor GetColor(StrokePositions stroke) {
-            // 2) Получить цвет мазка
-            throw new NotImplementedException();
-        }
-
         public void RemoveLastStroke() {
             if (lastStrokePositions == null) return;
 
@@ -110,6 +105,39 @@ namespace PaintingsGenerator.Images {
 
             lastStrokePositions = null;
             colorsToRecover!.Clear();
+        }
+
+        public RGBColor GetColor(StrokePositions positions, uint height) {
+            ulong red = 0, green = 0, blue = 0;
+            ulong numPositions = (ulong)positions.Count;
+
+            foreach (var pos in positions) {
+                var colorInPos = GetColor(pos, height);
+                UnpuckWithAdd(colorInPos, ref red, ref green, ref blue);
+            }
+
+            return new((byte)(red/numPositions), (byte)(green/numPositions),
+                       (byte)(blue/numPositions));
+        }
+
+        public RGBColor GetColor(Position pos, uint height) {
+            ulong red = 0, green = 0, blue = 0;
+            var part = GetPart(this, pos, height);
+
+            for (int y = 0; y < part.Height; ++y) {
+                for (int x = 0; x < part.Width; ++x)
+                    UnpuckWithAdd(part[pos.Y, pos.X], ref red, ref green, ref blue);
+            }
+
+            return new((byte)(red/part.Size), (byte)(green/part.Size),
+                       (byte)(blue/part.Size));
+        }
+
+        private static void UnpuckWithAdd(RGBColor color, ref ulong red,
+                                          ref ulong green, ref ulong blue) {
+            red += color.Red;
+            green += color.Green;
+            blue += color.Blue;
         }
 
         #region StaticMethods
