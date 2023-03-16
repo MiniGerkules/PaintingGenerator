@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Media;
+using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Colors;
@@ -10,7 +11,8 @@ namespace PaintingsGenerator.Images {
         public static readonly PixelFormat FORMAT = PixelFormats.Rgb24;
         public static readonly int BYTES_PER_PIXEL = (FORMAT.BitsPerPixel + 7) / 8;
 
-        private Stroke<RGBColor>? lastStroke = null;
+        private StrokePositions? lastStrokePositions = null;
+        private List<RGBColor>? colorsToRecover = null;
 
         #region Constructors
         private RGBImage(int width, int height) : base(new RGBColor[height, width]) {
@@ -65,18 +67,12 @@ namespace PaintingsGenerator.Images {
         }
 
         public override void AddStroke(Stroke<RGBColor> stroke) {
-            lastStroke = stroke;
+            lastStrokePositions = stroke.Positions;
+            colorsToRecover = new(lastStrokePositions.Count);
 
             foreach (var pos in stroke.Positions) {
-                int newRed = this[pos.Y, pos.X].Red + stroke.Color.Red;
-                int newGreen = this[pos.Y, pos.X].Green + stroke.Color.Green;
-                int newBlue = this[pos.Y, pos.X].Blue + stroke.Color.Blue;
-
-                byte realRed = (byte)Math.Min(newRed, byte.MaxValue);
-                byte realGreen = (byte)Math.Min(newGreen, byte.MaxValue);
-                byte realBlue = (byte)Math.Min(newBlue, byte.MaxValue);
-
-                this[pos.Y, pos.X] = new(realRed, realGreen, realBlue);
+                colorsToRecover.Add(this[pos.Y, pos.X]);
+                this[pos.Y, pos.X] = new(stroke.Color.Red, stroke.Color.Green, stroke.Color.Blue);
             }
         }
 
