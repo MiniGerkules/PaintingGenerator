@@ -101,11 +101,15 @@ namespace PaintingsGenerator.Images {
         }
 
         public void RemoveLastStroke() {
-            if (lastStroke != null) {
-                // Тут нужно убрать цвета с пикселей, которые попали с командой AddStroke
-                throw new NotImplementedException();
-                lastStroke = null;
+            if (lastStrokePositions == null) return;
+
+            int curColor = 0;
+            foreach (var pos in lastStrokePositions) {
+                this[pos.Y, pos.X] = colorsToRecover![curColor++];
             }
+
+            lastStrokePositions = null;
+            colorsToRecover!.Clear();
         }
 
         #region StaticMethods
