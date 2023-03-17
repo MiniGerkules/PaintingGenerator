@@ -12,9 +12,10 @@ namespace PaintingsGenerator.Colors {
             Blue = blue;
         }
 
-        public static int Difference(RGBColor a, RGBColor b) {
-            return Math.Abs(a.Red - b.Red) + Math.Abs(a.Green - b.Green) +
-                   Math.Abs(a.Blue - b.Blue);
+        public static uint Difference(RGBColor a, RGBColor b) {
+            return (uint)Math.Abs(a.Red - b.Red) +
+                   (uint)Math.Abs(a.Green - b.Green) +
+                   (uint)Math.Abs(a.Blue - b.Blue);
         }
     }
 }
