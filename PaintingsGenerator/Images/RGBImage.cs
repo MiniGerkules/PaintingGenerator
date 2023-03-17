@@ -44,14 +44,6 @@ namespace PaintingsGenerator.Images {
                 }
             }
         }
-
-        public RGBImage(RGBImage other, Position leftUp, Position rightDown)
-                : this(rightDown.X - leftUp.X + 1, rightDown.Y - leftUp.Y + 1) {
-            for (int i = leftUp.Y; i <= rightDown.Y; ++i) {
-                for (int j = leftUp.X; j <= rightDown.X; ++j)
-                    this[i, j] = other[i, j];
-            }
-        }
         #endregion
 
         public BitmapSource ToBitmap() {
