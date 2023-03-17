@@ -187,8 +187,8 @@ namespace PaintingsGenerator.Images {
             if (pos.X >= image.Width || pos.Y >= image.Height || pos.X < 0 || pos.Y < 0)
                 throw new Exception("Can't get data from the required position!");
 
-            Position leftUp = new(0, image.Width - 1);
-            Position rightDown = new(0, image.Height - 1);
+            Position leftUp = new(0, 0);
+            Position rightDown = new(image.Width - 1, image.Height - 1);
 
             if (pos.X > height) leftUp.X = pos.X - (int)height;
             if (pos.X < image.Width - 1 - height) rightDown.X = pos.X + (int)height;
