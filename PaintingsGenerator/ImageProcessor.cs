@@ -36,7 +36,7 @@ namespace PaintingsGenerator {
                 if (newDiff > curDiff) {
                     rgbPainting.RemoveLastStroke();
                 } else {
-                    imageProcessorVM.Bitmap = rgbPainting.ToBitmap();
+                    imageProcessorVM.Painting = rgbPainting.ToBitmap();
                     grayPainting.AddStroke(new(strokePos, new(rgbColor)));
                 }
             } while (curDiff > niceDiff);

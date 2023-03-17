@@ -2,17 +2,17 @@
 
 namespace PaintingsGenerator {
     public class ImageProcessorVM : NotifierOfPropertyChange {
-        private BitmapSource bitmap;
-        public BitmapSource Bitmap {
-            get => bitmap;
+        private BitmapSource painting;
+        public BitmapSource Painting {
+            get => painting;
             set {
-                bitmap = value;
-                NotifyPropertyChanged(nameof(Bitmap));
+                painting = value;
+                NotifyPropertyChanged(nameof(Painting));
             }
         }
 
-        public ImageProcessorVM(BitmapSource bitmap) {
-            this.bitmap = bitmap;
+        public ImageProcessorVM(BitmapSource painting) {
+            this.painting = painting;
         }
     }
 }
