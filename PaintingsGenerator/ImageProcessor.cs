@@ -19,7 +19,7 @@ namespace PaintingsGenerator {
             var grayPainting = new GrayImage(rgbPainting);
             var template = new RGBImage(imageToProcess);
 
-            uint height = 10;           /// !!! Выбрать нормальный способ получения высоты квадрата !!!
+            uint height = 65, maxLength = 627;
             double curDiff, niceDiff = 5;        /// !!! Выбрать время, когда перестать рисовать             !!!
 
             do {
@@ -27,7 +27,7 @@ namespace PaintingsGenerator {
 
                 var posWithMaxDiff = ImageTools.FindPosWithTheHighestDiff(template, rgbPainting, height);
                 var gradient = Gradient.GetGradient(grayPainting);
-                var strokePos = ImageTools.GetStroke(template, gradient, posWithMaxDiff, height);
+                var strokePos = ImageTools.GetStroke(template, gradient, posWithMaxDiff, height, maxLength);
                 var rgbColor = template.GetColor(strokePos, height);
 
                 rgbPainting.AddStroke(new(strokePos, rgbColor));

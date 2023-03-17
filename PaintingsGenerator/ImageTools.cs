@@ -31,13 +31,13 @@ namespace PaintingsGenerator {
 
         public static StrokePositions GetStroke(RGBImage image, Gradient gradient,
                                                 Position start, uint height,
-                                                int maxError = 4) {
+                                                uint maxLength, uint maxError = 4) {
             var positions = new StrokePositions { start };
             var prevColor = image.GetColor(positions[^1], height);
             var prevVec = gradient.GetPerpVector(positions[^1]);
             var step = height * 2 + 1;      // Step = width of brush
 
-            while (true) {
+            for (uint i = 0, max = maxLength/step; i < max; ++i) {
                 prevVec = gradient.GetPerpVector(positions[^1], prevVec);
                 prevVec.Normalize();
                 if (prevVec.IsPoint()) break;
