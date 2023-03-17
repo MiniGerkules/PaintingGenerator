@@ -34,12 +34,12 @@ namespace PaintingsGenerator.Images {
             if (imageToHandle.Format != FORMAT)
                 imageToHandle = ConverFormat(imageToHandle);
 
-            byte[] vals = new byte[BYTES_PER_PIXEL * imageToHandle.PixelWidth * imageToHandle.PixelHeight];
-            imageToHandle.CopyPixels(vals, BYTES_PER_PIXEL * imageToHandle.PixelWidth, 0);
+            byte[] vals = new byte[BYTES_PER_PIXEL * Width * Height];
+            imageToHandle.CopyPixels(vals, BYTES_PER_PIXEL * Width, 0);
 
             for (int i = 0; i < Height; ++i) {
                 for (int j = 0; j < Width; ++j) {
-                    int blockStart = i * BYTES_PER_PIXEL * imageToHandle.PixelWidth + j * BYTES_PER_PIXEL;
+                    int blockStart = i*BYTES_PER_PIXEL*Width + j*BYTES_PER_PIXEL;
                     this[i, j] = GetPixel(vals[blockStart..(blockStart + BYTES_PER_PIXEL)]);
                 }
             }
