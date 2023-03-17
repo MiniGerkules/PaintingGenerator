@@ -30,7 +30,7 @@ namespace PaintingsGenerator.Images {
         }
 
         public RGBImage(BitmapSource imageToHandle)
-                : this(imageToHandle.PixelHeight, imageToHandle.PixelWidth) {
+                : this(imageToHandle.PixelWidth, imageToHandle.PixelHeight) {
             if (imageToHandle.Format != FORMAT)
                 imageToHandle = ConverFormat(imageToHandle);
 
