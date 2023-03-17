@@ -145,8 +145,8 @@ namespace PaintingsGenerator.Images {
         }
 
         public static double GetDifference(RGBImage a, RGBImage b) {
-            var partA = new RGBImagePart(a, new(0, 0), new(a.Height - 1, a.Width - 1));
-            var partB = new RGBImagePart(b, new(0, 0), new(b.Height - 1, b.Width - 1)); ;
+            var partA = new RGBImagePart(a, new(0, 0), new(a.Width - 1, a.Height - 1));
+            var partB = new RGBImagePart(b, new(0, 0), new(b.Width - 1, b.Height - 1)); ;
 
             return GetDifference(partA, partB);
         }
