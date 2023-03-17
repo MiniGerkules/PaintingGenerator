@@ -194,7 +194,7 @@ namespace PaintingsGenerator.Images {
             if (pos.X < image.Width - 1 - height) rightDown.X = pos.X + (int)height;
 
             if (pos.Y > height) leftUp.Y = pos.Y - (int)height;
-            if (pos.Y < image.Height - 1 - height) rightDown.Y = pos.X + (int)height;
+            if (pos.Y < image.Height - 1 - height) rightDown.Y = pos.Y + (int)height;
 
             return new(image, leftUp, rightDown);
         }
