@@ -52,10 +52,10 @@ namespace PaintingsGenerator.Images {
 
             if (FORMAT == PixelFormats.Rgb24) {
                 for (int y = 0; y < Height; ++y) {
-                    for (int x = 0; x < stride; x += 3) {
-                        pixels[y, x + 0] = this[y, x].Red;
-                        pixels[y, x + 1] = this[y, x].Green;
-                        pixels[y, x + 2] = this[y, x].Blue;
+                    for (int x = 0; x < Width; x += 3) {
+                        pixels[y, 3*x + 0] = this[y, x].Red;
+                        pixels[y, 3*x + 1] = this[y, x].Green;
+                        pixels[y, 3*x + 2] = this[y, x].Blue;
                     }
                 }
             } else {
