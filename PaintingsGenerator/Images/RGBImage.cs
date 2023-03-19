@@ -8,17 +8,6 @@ using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator.Images {
     internal class RGBImage : Image<RGBColor> {
-        private record class RGBImagePart(RGBImage FullImagePixels,
-                                          Position LeftUp, Position RightDown) {
-            public int Width => RightDown.X - LeftUp.X;
-            public int Height => RightDown.Y - LeftUp.Y;
-            public ulong Size => (ulong)Width * (ulong)Height;
-
-            public RGBColor this[int i, int j] {
-                get => FullImagePixels[i + LeftUp.Y, j + LeftUp.X];
-            }
-        }
-
         public static readonly PixelFormat FORMAT = PixelFormats.Rgb24;
         public static readonly int BYTES_PER_PIXEL = (FORMAT.BitsPerPixel + 7) / 8;
 
@@ -106,7 +95,7 @@ namespace PaintingsGenerator.Images {
 
         public RGBColor GetColor(Position pos, uint height) {
             ulong red = 0, green = 0, blue = 0;
-            var part = GetPart(this, pos, height);
+            var part = GetPart(pos, height);
 
             for (int y = 0; y < part.Height; ++y) {
                 for (int x = 0; x < part.Width; ++x)
@@ -145,20 +134,13 @@ namespace PaintingsGenerator.Images {
         }
 
         public static double GetDifference(RGBImage a, RGBImage b) {
-            var partA = new RGBImagePart(a, new(0, 0), new(a.Width - 1, a.Height - 1));
-            var partB = new RGBImagePart(b, new(0, 0), new(b.Width - 1, b.Height - 1)); ;
+            var partA = new Proxy(a, new(0, 0), new(a.Width - 1, a.Height - 1));
+            var partB = new Proxy(b, new(0, 0), new(b.Width - 1, b.Height - 1)); ;
 
             return GetDifference(partA, partB);
         }
 
-        public static double GetDifference(RGBImage a, RGBImage b, Position pos, uint height) {
-            var partA = GetPart(a, pos, height);
-            var partB = GetPart(b, pos, height);
-
-            return GetDifference(partA, partB);
-        }
-
-        private static double GetDifference(RGBImagePart a, RGBImagePart b) {
+        private static double GetDifference(Proxy a, Proxy b) {
             if (a.Width != b.Width || a.Height != b.Height)
                 throw new Exception("Images must be the same size!");
 
@@ -172,27 +154,6 @@ namespace PaintingsGenerator.Images {
             }
 
             return (double)diff / (a.Height * a.Width);
-        }
-
-        /// <summary>
-        /// Extract a part of image from `image` in position `pos` and size of
-        /// side of square == 2*radius + 1
-        /// </summary>
-        /// <param name="image"> Image to extract part </param>
-        /// <param name="pos"> Center of square </param>
-        /// <param name="height"> Height from center square to its side </param>
-        /// <returns> Part of image </returns>
-        /// <exception cref="Exception"> If `pos` don't lie in image bounds </exception>
-        private static RGBImagePart GetPart(RGBImage image, Position pos, uint height) {
-            if (pos.X >= image.Width || pos.Y >= image.Height || pos.X < 0 || pos.Y < 0)
-                throw new Exception("Can't get data from the required position!");
-
-            var leftUp = new Position((int)Math.Max(0, pos.X - height),
-                                      (int)Math.Max(0, pos.Y - height));
-            var rightDown = new Position((int)Math.Min(image.Width - 1, pos.X + height),
-                                         (int)Math.Min(image.Height - 1, pos.Y + height));
-
-            return new(image, leftUp, rightDown);
         }
         #endregion
 
