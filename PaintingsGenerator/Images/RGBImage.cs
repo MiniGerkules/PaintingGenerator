@@ -37,14 +37,14 @@ namespace PaintingsGenerator.Images {
 
         public BitmapSource ToBitmap() {
             int stride = Width * BYTES_PER_PIXEL;
-            var pixels = new byte[Height, stride];
+            var pixels = new byte[Height * stride];
 
             if (FORMAT == PixelFormats.Rgb24) {
                 for (int y = 0; y < Height; ++y) {
                     for (int x = 0; x < Width; x += 3) {
-                        pixels[y, 3*x + 0] = this[y, x].Red;
-                        pixels[y, 3*x + 1] = this[y, x].Green;
-                        pixels[y, 3*x + 2] = this[y, x].Blue;
+                        pixels[y*Width + 3*x + 0] = this[y, x].Red;
+                        pixels[y*Width + 3*x + 1] = this[y, x].Green;
+                        pixels[y*Width + 3*x + 2] = this[y, x].Blue;
                     }
                 }
             } else {
