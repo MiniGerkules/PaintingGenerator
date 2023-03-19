@@ -14,18 +14,17 @@ namespace PaintingsGenerator {
             progressVM = new();
         }
 
-        public async void Process(BitmapSource imageToProcess) {
+        public async void Process(BitmapSource imageToProcess, double niceDiff = 5) {
             var rgbPainting = RGBImage.CreateEmpty(imageToProcess.PixelWidth, imageToProcess.PixelHeight);
             var grayPainting = new GrayImage(rgbPainting);
             var template = new RGBImage(imageToProcess);
 
             uint height = 65, maxLength = 627;
-            double curDiff, niceDiff = 5;        /// !!! Выбрать время, когда перестать рисовать             !!!
 
-            do {
-                curDiff = RGBImage.GetDifference(template, rgbPainting);
+            while (true) {
+                var curDiff = RGBImage.GetDifference(template, rgbPainting);
+                var posWithMaxDiff = ImageTools.FindPosWithTheHighestDiff(curDiff, height);
 
-                var posWithMaxDiff = ImageTools.FindPosWithTheHighestDiff(template, rgbPainting, height);
                 var gradient = Gradient.GetGradient(grayPainting);
                 var strokePos = ImageTools.GetStroke(template, gradient, posWithMaxDiff, height, maxLength);
                 var rgbColor = template.GetColor(strokePos, height);
@@ -33,13 +32,15 @@ namespace PaintingsGenerator {
                 rgbPainting.AddStroke(new(strokePos, rgbColor));
                 var newDiff = RGBImage.GetDifference(template, rgbPainting);
 
-                if (newDiff > curDiff) {
+                if (newDiff.SumDiff() > curDiff.SumDiff()) {
                     rgbPainting.RemoveLastStroke();
                 } else {
                     imageProcessorVM.Painting = rgbPainting.ToBitmap();
                     grayPainting.AddStroke(new(strokePos, new(rgbColor)));
                 }
-            } while (curDiff > niceDiff);
+
+                if (curDiff.SumDiff() <= niceDiff) break;
+            }
         }
 
         private static BitmapSource CreateEmptyBitmap(int width = 100, int height = 100,
