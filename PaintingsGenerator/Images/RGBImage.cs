@@ -133,27 +133,30 @@ namespace PaintingsGenerator.Images {
                 throw new Exception("Unsupported pixel encoding format!");
         }
 
-        public static double GetDifference(RGBImage a, RGBImage b) {
+        public static DifferenceOfImages GetDifference(RGBImage a, RGBImage b) {
             var partA = new Proxy(a, new(0, 0), new(a.Width - 1, a.Height - 1));
             var partB = new Proxy(b, new(0, 0), new(b.Width - 1, b.Height - 1)); ;
 
             return GetDifference(partA, partB);
         }
 
-        private static double GetDifference(Proxy a, Proxy b) {
+        private static DifferenceOfImages GetDifference(Proxy a, Proxy b) {
             if (a.Width != b.Width || a.Height != b.Height)
                 throw new Exception("Images must be the same size!");
 
-            ulong diff = 0;
+            var diff = new DifferenceOfImages(a.Width, a.Height);
             for (int y = 0; y < a.Height; ++y) {
                 for (int x = 0; x < a.Width; ++x) {
-                    diff += (ulong)Math.Abs(a[y, x].Red - b[y, x].Red);
-                    diff += (ulong)Math.Abs(a[y, x].Green - b[y, x].Green);
-                    diff += (ulong)Math.Abs(a[y, x].Blue - b[y, x].Blue);
+                    ushort pixelDiff = 0;
+                    pixelDiff += (ushort)Math.Abs(a[y, x].Red - b[y, x].Red);
+                    pixelDiff += (ushort)Math.Abs(a[y, x].Green - b[y, x].Green);
+                    pixelDiff += (ushort)Math.Abs(a[y, x].Blue - b[y, x].Blue);
+
+                    diff[y, x] = pixelDiff;
                 }
             }
 
-            return (double)diff / (a.Height * a.Width);
+            return diff;
         }
         #endregion
 
