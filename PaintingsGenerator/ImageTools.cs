@@ -1,6 +1,4 @@
-﻿using System;
-
-using PaintingsGenerator.Colors;
+﻿using PaintingsGenerator.Colors;
 using PaintingsGenerator.Images;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.Images.ImageStuff;
