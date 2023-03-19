@@ -1,5 +1,4 @@
-﻿using PaintingsGenerator.Images;
-using System;
+﻿using System;
 
 namespace PaintingsGenerator {
     public class Container<ElemType> {

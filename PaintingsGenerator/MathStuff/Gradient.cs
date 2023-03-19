@@ -1,5 +1,4 @@
 ﻿using PaintingsGenerator.Images;
-using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator.MathStuff {
     internal class Gradient {
