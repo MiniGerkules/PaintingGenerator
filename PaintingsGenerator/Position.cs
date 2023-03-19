@@ -1,4 +1,4 @@
-﻿namespace PaintingsGenerator.Images.ImageStuff {
+﻿namespace PaintingsGenerator {
     public struct Position {
         public int X { get; set; }
         public int Y { get; set; }
