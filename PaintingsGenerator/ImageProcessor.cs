@@ -29,14 +29,14 @@ namespace PaintingsGenerator {
                 var strokePos = ImageTools.GetStroke(template, gradient, posWithMaxDiff, height, maxLength);
                 var rgbColor = template.GetColor(strokePos, height);
 
-                rgbPainting.AddStroke(new(strokePos, rgbColor));
+                rgbPainting.AddStroke(new(strokePos, rgbColor, height));
                 var newDiff = RGBImage.GetDifference(template, rgbPainting);
 
                 if (newDiff.SumDiff() > curDiff.SumDiff()) {
                     rgbPainting.RemoveLastStroke();
                 } else {
                     imageProcessorVM.Painting = rgbPainting.ToBitmap();
-                    grayPainting.AddStroke(new(strokePos, new(rgbColor)));
+                    grayPainting.AddStroke(new(strokePos, new(rgbColor), height));
                 }
 
                 if (curDiff.SumDiff() <= niceDiff) break;
