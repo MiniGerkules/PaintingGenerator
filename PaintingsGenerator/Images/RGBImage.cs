@@ -64,7 +64,13 @@ namespace PaintingsGenerator.Images {
 
             foreach (var pos in stroke.Positions) {
                 colorsToRecover.Add(this[pos.Y, pos.X]);
-                this[pos.Y, pos.X] = new(stroke.Color.Red, stroke.Color.Green, stroke.Color.Blue);
+                var newColor = new RGBColor(stroke.Color.Red, stroke.Color.Green, stroke.Color.Blue);
+                var part = GetPart(pos, stroke.Height);
+
+                for (int y = 0; y < part.Height; ++y) {
+                    for (int x = 0; x < part.Width; ++x)
+                        part[y, x] = newColor;
+                }
             }
         }
 
