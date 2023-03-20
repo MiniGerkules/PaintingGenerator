@@ -99,7 +99,7 @@ namespace PaintingsGenerator.Images {
 
             for (int y = 0; y < part.Height; ++y) {
                 for (int x = 0; x < part.Width; ++x)
-                    UnpuckWithAdd(part[pos.Y, pos.X], ref red, ref green, ref blue);
+                    UnpuckWithAdd(part[y, x], ref red, ref green, ref blue);
             }
 
             return new((byte)(red/part.Size), (byte)(green/part.Size),
