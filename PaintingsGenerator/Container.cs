@@ -10,6 +10,7 @@ namespace PaintingsGenerator {
 
             public ElemType this[int i, int j] {
                 get => Container[i + LeftUp.Y, j + LeftUp.X];
+                set => Container[i + LeftUp.Y, j + LeftUp.X] = value;
             }
         }
 
