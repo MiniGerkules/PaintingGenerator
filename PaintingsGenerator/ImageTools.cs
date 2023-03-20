@@ -6,11 +6,12 @@ using PaintingsGenerator.Images.ImageStuff;
 namespace PaintingsGenerator {
     internal class ImageTools {
         public static Position FindPosWithTheHighestDiff(DifferenceOfImages diff, uint height) {
-            var posWithMaxDiff = new Position(0, 0);
+            uint startY = 2*height, startX = startY;
+            var posWithMaxDiff = new Position((int)startX, (int)startY);
             var maxDiff = diff.GetDifference(posWithMaxDiff, height);
 
-            for (uint y = 2*height, endY = (uint)(diff.Height - 2*height); y < endY; y += height) {
-                for (uint x = 2*height, endX = (uint)(diff.Width - 2*height); x < endX; x += height) {
+            for (uint y = startY, endY = (uint)(diff.Height - 2*height); y < endY; y += height) {
+                for (uint x = startX, endX = (uint)(diff.Width - 2*height); x < endX; x += height) {
                     var curPos = new Position((int)x, (int)y);
                     var curDiff = diff.GetDifference(curPos, height);
 
