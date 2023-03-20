@@ -7,8 +7,8 @@
             X = x; Y = y;
         }
 
-        public bool InBounds(int leftX, int upY, int rightX, int downY) {
-            return leftX <= X && X <= rightX && upY <= Y && Y <= downY;
+        public bool InBounds(int left, int up, int right, int down) {
+            return left <= X && X <= right && up <= Y && Y <= down;
         }
     }
 }
