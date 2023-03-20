@@ -9,9 +9,9 @@ namespace PaintingsGenerator {
             var posWithMaxDiff = new Position(0, 0);
             var maxDiff = diff.GetDifference(posWithMaxDiff, height);
 
-            for (int y = 0; y < diff.Height; ++y) {
-                for (int x = 0; x < diff.Width; ++x) {
-                    var curPos = new Position(x, y);
+            for (uint y = 2*height, endY = (uint)(diff.Height - 2*height); y < endY; y += height) {
+                for (uint x = 2*height, endX = (uint)(diff.Width - 2*height); x < endX; x += height) {
+                    var curPos = new Position((int)x, (int)y);
                     var curDiff = diff.GetDifference(curPos, height);
 
                     if (curDiff > maxDiff) {
