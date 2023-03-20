@@ -135,7 +135,7 @@ namespace PaintingsGenerator.Images {
 
         public static DifferenceOfImages GetDifference(RGBImage a, RGBImage b) {
             var partA = new Proxy(a, new(0, 0), new(a.Width - 1, a.Height - 1));
-            var partB = new Proxy(b, new(0, 0), new(b.Width - 1, b.Height - 1)); ;
+            var partB = new Proxy(b, new(0, 0), new(b.Width - 1, b.Height - 1));
 
             return GetDifference(partA, partB);
         }
