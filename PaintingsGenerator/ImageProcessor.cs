@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Images;
@@ -14,33 +15,43 @@ namespace PaintingsGenerator {
             progressVM = new();
         }
 
-        public async void Process(BitmapSource imageToProcess, double niceDiff = 5) {
-            var rgbPainting = RGBImage.CreateEmpty(imageToProcess.PixelWidth, imageToProcess.PixelHeight);
+        public async void Process(BitmapSource toProcess, double niceDiff = 5) {
+            var rgbPainting = RGBImage.CreateEmpty(toProcess.PixelWidth, toProcess.PixelHeight);
             var grayPainting = new GrayImage(rgbPainting);
-            var template = new RGBImage(imageToProcess);
+            var template = new RGBImage(toProcess);
 
             uint height = 65, maxLength = 627;
 
             while (true) {
-                var curDiff = RGBImage.GetDifference(template, rgbPainting);
-                var posWithMaxDiff = ImageTools.FindPosWithTheHighestDiff(curDiff, height);
+                var curDiff = await Task.Run(() => RGBImage.GetDifference(template, rgbPainting));
+                var posWithMaxDiff = Task.Run(() => ImageTools.FindPosWithTheHighestDiff(curDiff, height));
 
-                var gradient = Gradient.GetGradient(grayPainting);
-                var strokePos = ImageTools.GetStroke(template, gradient, posWithMaxDiff, height, maxLength);
-                var rgbColor = template.GetColor(strokePos, height);
+                var gradient = Task.Run(() => Gradient.GetGradient(grayPainting));
+                var strokePos = await Task.Run(async () =>
+                    ImageTools.GetStroke(template, await gradient, await posWithMaxDiff, height, maxLength)
+                );
+                var rgbColor = await Task.Run(() => template.GetColor(strokePos, height));
 
-                rgbPainting.AddStroke(new(strokePos, rgbColor, height));
-                var newDiff = RGBImage.GetDifference(template, rgbPainting);
+                await Task.Run(() => rgbPainting.AddStroke(new(strokePos, rgbColor, height)));
+                var newDiff = await Task.Run(() => RGBImage.GetDifference(template, rgbPainting));
 
-                if (newDiff.SumDiff() > curDiff.SumDiff()) {
+                if (newDiff.SumDiff() >= curDiff.SumDiff()) {
                     rgbPainting.RemoveLastStroke();
                 } else {
+                    await Task.Run(() => grayPainting.AddStroke(new(strokePos, new(rgbColor), height)));
                     imageProcessorVM.Painting = rgbPainting.ToBitmap();
-                    grayPainting.AddStroke(new(strokePos, new(rgbColor), height));
+                    progressVM.CurProgress = GetProgress(niceDiff, newDiff.SumDiff());
                 }
 
                 if (curDiff.SumDiff() <= niceDiff) break;
             }
+        }
+
+        private static uint GetProgress(double curDiff, double niceDiff) {
+            // niceDiff == 100%
+            // curDiff == x%
+
+            return (uint)(curDiff * 100 / niceDiff);
         }
 
         private static BitmapSource CreateEmptyBitmap(int width = 100, int height = 100,
