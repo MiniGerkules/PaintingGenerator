@@ -41,10 +41,12 @@ namespace PaintingsGenerator.Images {
 
             if (FORMAT == PixelFormats.Rgb24) {
                 for (int y = 0; y < Height; ++y) {
-                    for (int x = 0; x < Width; x += 3) {
-                        pixels[y*Width + 3*x + 0] = this[y, x].Red;
-                        pixels[y*Width + 3*x + 1] = this[y, x].Green;
-                        pixels[y*Width + 3*x + 2] = this[y, x].Blue;
+                    for (int x = 0; x < Width; ++x) {
+                        var curPtr = 3*(y*Width + x);
+
+                        pixels[curPtr + 0] = this[y, x].Red;
+                        pixels[curPtr + 1] = this[y, x].Green;
+                        pixels[curPtr + 2] = this[y, x].Blue;
                     }
                 }
             } else {
