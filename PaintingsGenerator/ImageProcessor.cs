@@ -34,14 +34,16 @@ namespace PaintingsGenerator {
                 await Task.Run(() => rgbPainting.AddStroke(new(strokePos, rgbColor, height)));
                 var newDiff = await Task.Run(() => RGBImage.GetDifference(template, rgbPainting));
 
-                if (newDiff.SumDiff() >= curDiff.SumDiff()) {
+                double newDiffVal = newDiff.SumDiff(), curDiffVal = curDiff.SumDiff();
+                if (newDiffVal >= curDiffVal) {
                     rgbPainting.RemoveLastStroke();
                 } else {
+                    curDiffVal = newDiffVal;
                     imageProcessorVM.Painting = rgbPainting.ToBitmap();
                     progressVM.CurProgress = GetProgress(niceDiff, newDiff.SumDiff());
                 }
 
-                if (curDiff.SumDiff() <= niceDiff) break;
+                if (curDiffVal <= niceDiff) break;
             }
         }
 
