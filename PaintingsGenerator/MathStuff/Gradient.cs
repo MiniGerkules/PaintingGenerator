@@ -62,10 +62,15 @@ namespace PaintingsGenerator.MathStuff {
                 {       p1,     0,          -p1 },
             };
 
-            var kernel_y = new double[kernel_x.GetLength(0), kernel_x.GetLength(1)];
-            for (int i = 0; i < kernel_x.GetLength(0); ++i) {
-                for (int j = 0; j < kernel_x.GetLength(1); ++j)
-                    kernel_y[j, i] = kernel_x[i, j];
+            int kernel_x_height = kernel_x.GetLength(0);
+            int kernel_x_width = kernel_x.GetLength(1);
+            var kernel_y = new double[kernel_x_width, kernel_x_height];
+
+            for (int y = 0; y < kernel_x_height; ++y) {
+                for (int x = 0; x < kernel_x_width; ++x) {
+                    kernel_x[y, x] *= 0.5;
+                    kernel_y[x, y] = kernel_x[y, x];
+                }
             }
 
             var dx = MakeConvolution(grayImage, kernel_x);
