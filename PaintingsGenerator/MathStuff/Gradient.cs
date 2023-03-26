@@ -1,4 +1,8 @@
-﻿using PaintingsGenerator.Images;
+﻿using System;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+using PaintingsGenerator.Images;
 
 namespace PaintingsGenerator.MathStuff {
     internal class Gradient {
@@ -27,6 +31,27 @@ namespace PaintingsGenerator.MathStuff {
                 newDir.Reverse();
 
             return newDir;
+        }
+
+        public BitmapSource ToBitmap() {
+            int height = dx.GetLength(0), width = dx.GetLength(1);
+            int stride = width;
+            var pixels = new byte[height * stride];
+
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    var val = (int)(Math.Atan2(dy[y, x], dx[y, x])*byte.MaxValue);
+                    val = Math.Max(Math.Min(val, byte.MaxValue), byte.MinValue);
+
+                    pixels[y*width + x] = (byte)val;
+                }
+            }
+
+            return BitmapSource.Create(
+                width, height, 96, 96,
+                PixelFormats.Gray8, null,
+                pixels, stride
+            );
         }
 
         #region StaticMethods
