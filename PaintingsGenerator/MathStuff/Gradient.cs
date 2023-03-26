@@ -29,7 +29,6 @@ namespace PaintingsGenerator.MathStuff {
 
             if (newDir.X*prevDir.X + newDir.Y*prevDir.Y < 0)
                 newDir.Reverse();
-
             return newDir;
         }
 
@@ -57,10 +56,10 @@ namespace PaintingsGenerator.MathStuff {
         #region StaticMethods
         public static Gradient GetGradient(GrayImage grayImage) {
             double p1 = 0.183;
-            var kernel_x = new double[3, 3] {
-                { p1,           0,      -p1 },
-                { 1 - 2*p1,     0,      2*p1 - 1 },
-                { p1,           0,      -p1 },
+            var kernel_x = new double[,] {
+                {       p1,     0,          -p1 },
+                { 1 - 2*p1,     0,     2*p1 - 1 },
+                {       p1,     0,          -p1 },
             };
 
             var kernel_y = new double[kernel_x.GetLength(0), kernel_x.GetLength(1)];
