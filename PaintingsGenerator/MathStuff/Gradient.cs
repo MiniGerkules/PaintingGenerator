@@ -80,21 +80,21 @@ namespace PaintingsGenerator.MathStuff {
         }
 
         private static double[,] MakeConvolution(GrayImage image, double[,] kernel) {
-            int kCenterY = kernel.GetLength(0) / 2;
-            int kCenterX = kernel.GetLength(1) / 2;
+            var kernel_height = kernel.GetLength(0);
+            var kernel_width = kernel.GetLength(1);
 
-            int imageHeight = image.Height;
-            int imageWidth = image.Width;
+            int kernel_center_y = kernel_height / 2;
+            int kernel_center_x = kernel_width / 2;
 
             var res = new double[image.Height, image.Width];
-            for (int img_y = 0; img_y < imageHeight; ++img_y) {
-                for (int img_x = 0; img_x < imageWidth; ++img_x) {
-                    for (int kern_y = 0; kern_y < kernel.GetLength(0); ++kern_y) {
-                        for (int kern_x = 0; kern_x < kernel.GetLength(1); ++kern_x) {
-                            int y = img_y + (kern_y - kCenterY);
-                            int x = img_x + (kern_x - kCenterX);
+            for (int img_y = 0; img_y < image.Height; ++img_y) {
+                for (int img_x = 0; img_x < image.Width; ++img_x) {
+                    for (int kern_y = 0; kern_y < kernel_height; ++kern_y) {
+                        for (int kern_x = 0; kern_x < kernel_width; ++kern_x) {
+                            int y = img_y + (kern_y - kernel_center_y);
+                            int x = img_x + (kern_x - kernel_center_x);
 
-                            if (y >= 0 && y < imageHeight && x >= 0 && x < imageWidth)
+                            if (y >= 0 && y < image.Height && x >= 0 && x < image.Width)
                                 res[img_y, img_x] += image[y, x].Gray * kernel[kern_y, kern_x];
                         }
                     }
