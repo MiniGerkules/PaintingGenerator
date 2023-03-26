@@ -6,6 +6,29 @@ using PaintingsGenerator.Images;
 
 namespace PaintingsGenerator.MathStuff {
     internal class Gradient {
+        private static readonly double[,] kernel_x;
+        private static readonly double[,] kernel_y;
+
+        static Gradient() {
+            double p1 = 0.183;
+            kernel_x = new double[,] {
+                {       p1,     0,          -p1 },
+                { 1 - 2*p1,     0,     2*p1 - 1 },
+                {       p1,     0,          -p1 },
+            };
+
+            int kernel_x_height = kernel_x.GetLength(0);
+            int kernel_x_width = kernel_x.GetLength(1);
+            kernel_y = new double[kernel_x_width, kernel_x_height];
+
+            for (int y = 0; y < kernel_x_height; ++y) {
+                for (int x = 0; x < kernel_x_width; ++x) {
+                    kernel_x[y, x] *= 0.5;
+                    kernel_y[x, y] = kernel_x[y, x];
+                }
+            }
+        }
+
         private readonly double[,] dx;
         private readonly double[,] dy;
 
@@ -55,24 +78,6 @@ namespace PaintingsGenerator.MathStuff {
 
         #region StaticMethods
         public static Gradient GetGradient(GrayImage grayImage) {
-            double p1 = 0.183;
-            var kernel_x = new double[,] {
-                {       p1,     0,          -p1 },
-                { 1 - 2*p1,     0,     2*p1 - 1 },
-                {       p1,     0,          -p1 },
-            };
-
-            int kernel_x_height = kernel_x.GetLength(0);
-            int kernel_x_width = kernel_x.GetLength(1);
-            var kernel_y = new double[kernel_x_width, kernel_x_height];
-
-            for (int y = 0; y < kernel_x_height; ++y) {
-                for (int x = 0; x < kernel_x_width; ++x) {
-                    kernel_x[y, x] *= 0.5;
-                    kernel_y[x, y] = kernel_x[y, x];
-                }
-            }
-
             var dx = MakeConvolution(grayImage, kernel_x);
             var dy = MakeConvolution(grayImage, kernel_y);
 
