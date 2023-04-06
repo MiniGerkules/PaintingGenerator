@@ -51,7 +51,8 @@ namespace PaintingsGenerator.MathStuff {
             var newDir = GetPerpVector(position);
 
             if (newDir.X*prevDir.X + newDir.Y*prevDir.Y < 0)
-                newDir.Reverse();
+                newDir = newDir.Reverse();
+
             return newDir;
         }
 
