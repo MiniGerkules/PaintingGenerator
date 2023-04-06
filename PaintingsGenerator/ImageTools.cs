@@ -29,7 +29,7 @@ namespace PaintingsGenerator {
             return posWithMaxDiff;
         }
 
-        public static Position GetStrokeStart(DifferenceOfImages diff, uint height) {
+        public static Position GetStrokeStartByRand(DifferenceOfImages diff, uint height) {
             var rand = new Random();
 
             var possibleStarts = new List<KeyValuePair<Position, double>>();

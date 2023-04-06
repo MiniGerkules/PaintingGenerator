@@ -24,7 +24,7 @@ namespace PaintingsGenerator {
 
             while (true) {
                 var curDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
-                var posWithMaxDiff = Task.Run(() => ImageTools.GetStrokeStart(curDiff, height));
+                var posWithMaxDiff = Task.Run(() => ImageTools.GetStrokeStartByRand(curDiff, height));
 
                 var strokePos = await Task.Run(async () =>
                     ImageTools.GetStroke(template, gradient, await posWithMaxDiff, height, maxLength)
