@@ -24,14 +24,14 @@ namespace PaintingsGenerator {
 
             while (true) {
                 var curDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
-                var posWithMaxDiff = Task.Run(() => ImageTools.FindPosWithTheHighestDiff(curDiff, height));
+                var posWithMaxDiff = Task.Run(() => ImageTools.GetStrokeStart(curDiff, height));
 
                 var strokePos = await Task.Run(async () =>
                     ImageTools.GetStroke(template, gradient, await posWithMaxDiff, height, maxLength)
                 );
-                var rgbColor = await Task.Run(() => template.GetColor(strokePos, height));
+                var rgbColor = Task.Run(() => template.GetColor(strokePos, height));
 
-                await Task.Run(() => painting.AddStroke(new(strokePos, rgbColor, height)));
+                await Task.Run(async () => painting.AddStroke(new(strokePos, await rgbColor, height)));
                 var newDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
 
                 double newDiffVal = newDiff.SumDiff(), curDiffVal = curDiff.SumDiff();
@@ -40,7 +40,7 @@ namespace PaintingsGenerator {
                 } else {
                     curDiffVal = newDiffVal;
                     imageProcessorVM.Painting = painting.ToBitmap();
-                    progressVM.CurProgress = GetProgress(niceDiff, newDiff.SumDiff());
+                    progressVM.CurProgress = GetProgress(niceDiff, curDiffVal);
                 }
 
                 if (curDiffVal <= niceDiff) break;
