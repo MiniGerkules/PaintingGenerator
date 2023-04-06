@@ -9,7 +9,7 @@ using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator {
     internal class ImageTools {
-        public static Position FindPosWithTheHighestDiff(DifferenceOfImages diff, uint height) {
+        public static Position GetStrokeStartByDiff(DifferenceOfImages diff, uint height) {
             uint startY = 2*height, startX = startY;
             var posWithMaxDiff = new Position((int)startX, (int)startY);
             var maxDiff = diff.GetDifference(posWithMaxDiff, height);
