@@ -114,6 +114,21 @@ namespace PaintingsGenerator.Images {
                        (byte)(blue/part.Size));
         }
 
+        public double GetColorError(Position pos, uint height, RGBColor avgColor) {
+            var part = GetPart(pos, height);
+            double error = 0.0;
+
+            for (int y = 0; y < part.Height; ++y) {
+                for (int x = 0; x < part.Width; ++x) {
+                    error += Math.Pow(part[y, x].Red - avgColor.Red, 2);
+                    error += Math.Pow(part[y, x].Green - avgColor.Green, 2);
+                    error += Math.Pow(part[y, x].Blue - avgColor.Blue, 2);
+                }
+            }
+
+            return error;
+        }
+
         private static void UnpuckWithAdd(RGBColor color, ref ulong red,
                                           ref ulong green, ref ulong blue) {
             red += color.Red;
