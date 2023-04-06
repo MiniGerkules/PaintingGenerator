@@ -1,4 +1,8 @@
-﻿using PaintingsGenerator.Colors;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
+
+using PaintingsGenerator.Colors;
 using PaintingsGenerator.Images;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.Images.ImageStuff;
@@ -23,6 +27,20 @@ namespace PaintingsGenerator {
             }
 
             return posWithMaxDiff;
+        }
+
+        public static Position GetStrokeStart(DifferenceOfImages diff, uint height) {
+            var rand = new Random();
+
+            var possibleStarts = new List<KeyValuePair<Position, double>>();
+            for (int i = 0; i < 20; ++i) {
+                var start = new Position(rand.Next(0, diff.Width), rand.Next(0, diff.Height));
+                var difference = diff.GetDifference(start, height);
+
+                possibleStarts.Add(new(start, difference));
+            }
+
+            return possibleStarts.MaxBy((elem) => elem.Value).Key;
         }
 
         public static StrokePositions GetStroke(RGBImage image, Gradient gradient,
