@@ -45,26 +45,30 @@ namespace PaintingsGenerator {
 
         public static StrokePositions GetStroke(RGBImage image, Gradient gradient,
                                                 Position start, uint height,
-                                                uint maxLength, uint maxError = 4) {
+                                                uint maxLength, double maxDiffInTimes = 1.5) {
             var positions = new StrokePositions { start };
-            var prevColor = image.GetColor(positions[^1], height);
-            var prevVec = gradient.GetPerpVector(positions[^1]);
+            var startColor = image.GetColor(start, height);
+            var startError = image.GetColorError(positions[^1], height, startColor);
+            var errors = new List<double>();
+
+            var peprVec = gradient.GetPerpVector(positions[^1]);
             var step = height * 2 + 1;      // Step = width of brush
 
             for (uint i = 0, max = maxLength/step; i < max; ++i) {
-                prevVec = gradient.GetPerpVector(positions[^1], prevVec);
-                prevVec.Normalize();
-                if (prevVec.IsPoint()) break;
+                peprVec = gradient.GetPerpVector(positions[^1], peprVec);
+                peprVec.Normalize();
+                if (peprVec.IsPoint()) break;
 
-                var newPos = GetNewPosition(positions[^1], prevVec, step);
+                var newPos = GetNewPosition(positions[^1], peprVec, step);
                 if (!newPos.InBounds(0, 0, image.Width - 1, image.Height - 1)) break;
 
                 var newColor = image.GetColor(newPos, height);
-                var curError = RGBColor.Difference(prevColor, newColor);
-                if (curError > maxError) break;
+                errors.Add(image.GetColorError(newPos, height, newColor));
+
+                var strokeErr = errors.Sum() / errors.Count;
+                if (strokeErr > startError * maxDiffInTimes) break;
 
                 positions.Add(newPos);
-                prevColor = newColor;
             }
 
             return positions;
