@@ -6,8 +6,25 @@ using PaintingsGenerator.Images;
 
 namespace PaintingsGenerator.MathStuff {
     internal class Gradient {
+        private record struct DoubleWrap : IToDoubleConvertable {
+            private double val;
+            public double Value {
+                get => val;
+                set => val = value;
+            }
+        }
+
         private static readonly double[,] kernel_x;
         private static readonly double[,] kernel_y;
+        private static readonly double[,] gaussian = new double[,] {
+            { 0.00000067,   0.00002292,   0.00019117,   0.00038771,   0.00019117,   0.00002292,   0.00000067 },
+            { 0.00002292,   0.00078633,   0.00655965,   0.01330373,   0.00655965,   0.00078633,   0.00002292 },
+            { 0.00019117,   0.00655965,   0.05472157,   0.11098164,   0.05472157,   0.00655965,   0.00019117 },
+            { 0.00038771,   0.01330373,   0.11098164,   0.22508352,   0.11098164,   0.01330373,   0.00038771 },
+            { 0.00019117,   0.00655965,   0.05472157,   0.11098164,   0.05472157,   0.00655965,   0.00019117 },
+            { 0.00002292,   0.00078633,   0.00655965,   0.01330373,   0.00655965,   0.00078633,   0.00002292 },
+            { 0.00000067,   0.00002292,   0.00019117,   0.00038771,   0.00019117,   0.00002292,   0.00000067 }
+        };
 
         static Gradient() {
             double p1 = 0.183;
@@ -32,9 +49,18 @@ namespace PaintingsGenerator.MathStuff {
         private readonly double[,] dx;
         private readonly double[,] dy;
 
-        public Gradient(double[,] dx, double[,] dy) {
-            this.dx = dx;
-            this.dy = dy;
+        private Gradient(Container<DoubleWrap> dx, Container<DoubleWrap> dy) {
+            this.dx = new double[dx.Height, dx.Width];
+            for (int y = 0; y <  dx.Height; ++y) {
+                for (int x = 0; x < dx.Width; ++x)
+                    this.dx[y, x] = dx[y, x].Value;
+            }
+
+            this.dy = new double[dy.Height, dy.Width];
+            for (int y = 0; y <  dy.Height; ++y) {
+                for (int x = 0; x < dy.Width; ++x)
+                    this.dy[y, x] = dy[y, x].Value;
+            }
         }
 
         public Vector2D GetPerpVector(Position position) {
@@ -82,17 +108,21 @@ namespace PaintingsGenerator.MathStuff {
             var dx = MakeConvolution(grayImage, kernel_x);
             var dy = MakeConvolution(grayImage, kernel_y);
 
+            dx = MakeConvolution(dx, gaussian);
+            dy = MakeConvolution(dy, gaussian);
+
             return new(dx, dy);
         }
 
-        private static double[,] MakeConvolution(GrayImage image, double[,] kernel) {
+        private static Container<DoubleWrap> MakeConvolution<T>(Container<T> image, double[,] kernel)
+                where T : IToDoubleConvertable {
             var kernel_height = kernel.GetLength(0);
             var kernel_width = kernel.GetLength(1);
 
             int kernel_center_y = kernel_height / 2;
             int kernel_center_x = kernel_width / 2;
 
-            var res = new double[image.Height, image.Width];
+            var res = new DoubleWrap[image.Height, image.Width];
             for (int img_y = 0; img_y < image.Height; ++img_y) {
                 for (int img_x = 0; img_x < image.Width; ++img_x) {
                     for (int kern_y = 0; kern_y < kernel_height; ++kern_y) {
@@ -100,14 +130,16 @@ namespace PaintingsGenerator.MathStuff {
                             int y = img_y + (kern_y - kernel_center_y);
                             int x = img_x + (kern_x - kernel_center_x);
 
-                            if (y >= 0 && y < image.Height && x >= 0 && x < image.Width)
-                                res[img_y, img_x] += image[y, x].Gray * kernel[kern_y, kern_x];
+                            if (y >= 0 && y < image.Height && x >= 0 && x < image.Width) {
+                                res[img_y, img_x].Value = res[img_y, img_x].Value +
+                                                          image[y, x].Value*kernel[kern_y, kern_x];
+                            }
                         }
                     }
                 }
             }
 
-            return res;
+            return new(res);
         }
         #endregion
     }
