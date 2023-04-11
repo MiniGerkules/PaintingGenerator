@@ -72,24 +72,6 @@ namespace PaintingsGenerator {
             }
         }
 
-        protected record class Bounds {
-            public int LeftX { get; }
-            public int RightX { get; }
-            public int UpY { get; }
-            public int DownY { get; }
-
-            public Bounds(int leftX, int rightX, int upY, int downY) {
-                LeftX = leftX;
-                RightX = rightX;
-                UpY = upY;
-                DownY = downY;
-            }
-
-            public bool XInBounds(int x) => LeftX <= x && x <= RightX;
-            public bool YInBounds(int y) => UpY <= y && y <= DownY;
-            public bool InBounds(Position pos) => XInBounds(pos.X) && YInBounds(pos.Y);
-        }
-
         private readonly ElemType[,] elems;
 
         public int Height => elems.GetLength(0);
