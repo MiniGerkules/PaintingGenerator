@@ -82,7 +82,7 @@ namespace PaintingsGenerator.Images {
                 var curPos = stroke.Positions[i];
                 var nextPos = stroke.Positions[i + 1];
 
-                positions.Add(GetPositions(curPos, nextPos, stroke.Height));
+                positions.Add(GetStrokePositions(curPos, nextPos, stroke.Height));
             }
 
             positions.MakeUnique();
@@ -95,7 +95,7 @@ namespace PaintingsGenerator.Images {
             }
         }
 
-        private StrokePositions GetPositions(Position start, Position end, uint radius) {
+        private StrokePositions GetStrokePositions(Position start, Position end, uint radius) {
             var bounds = GetBounds(start, end, radius);
             var k_norm = (double)(end.Y-start.Y) / (end.X-start.X);
             StrokePositions positions;
@@ -230,9 +230,9 @@ namespace PaintingsGenerator.Images {
             AddNewPositions(positions, bounds, startX, endX, biasX, getY1Y2);
         }
 
-        private static void AddNewPositions(StrokePositions positions,
-                                            Bounds bounds, int startX, int endX,
-                                            int biasX, Func<int, (int, int)> getY1Y2) {
+        private static void AddNewPositions(StrokePositions positions, Bounds bounds,
+                                            int startX, int endX, int biasX,
+                                            Func<int, (int, int)> getY1Y2) {
             for (int x = startX; x <= endX; ++x) {
                 var (y1, y2) = getY1Y2(x);
 
