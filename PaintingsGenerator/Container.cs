@@ -36,8 +36,9 @@ namespace PaintingsGenerator {
 
         public int Height => elems.GetLength(0);
         public int Width => elems.GetLength(1);
+        public ulong Size => (ulong)Width * (ulong)Height;
 
-        public ElemType this[int i, int j] {
+        virtual public ElemType this[int i, int j] {
             get => elems[i, j];
             set => elems[i, j] = value;
         }
