@@ -1,9 +1,10 @@
-﻿using System.Collections;
+﻿using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace PaintingsGenerator.Images.ImageStuff {
     public class StrokePositions : IEnumerable<Position> {
-        private readonly List<Position> positions = new();
+        private List<Position> positions = new();
         public Position this[int i] => positions[i];
         public int Count => positions.Count;
 
@@ -16,5 +17,11 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
         public void Add(Position position) => positions.Add(position);
         public void Add(StrokePositions strokePositions) => positions.AddRange(strokePositions);
+
+        public void MakeUnique() {
+            var unique = new HashSet<Position>(positions);
+            positions = unique.ToList();
+            positions.Sort((Position a, Position b) => a.X - b.X);
+        }
     }
 }
