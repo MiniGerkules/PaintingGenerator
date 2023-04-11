@@ -15,7 +15,7 @@
             }
         }
 
-        public double GetDifference(Position pos, uint height) {
+        public ulong GetSumDifference(Position pos, uint height) {
             var part = GetCirclePart(pos, height);
 
             ulong diff = 0;
