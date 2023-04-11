@@ -41,12 +41,17 @@ namespace PaintingsGenerator {
             if (pos.X >= Width || pos.Y >= Height || pos.X < 0 || pos.Y < 0)
                 throw new Exception("Can't get data from the required position!");
 
-            var leftUp = new Position((int)Math.Max(0, pos.X - height),
-                                      (int)Math.Max(0, pos.Y - height));
-            var rightDown = new Position((int)Math.Min(Width - 1, pos.X + height),
-                                         (int)Math.Min(Height - 1, pos.Y + height));
+            var leftUp = new Position((int)GetPartLeftBound(pos, height),
+                                      (int)GetPartUpBound(pos, height));
+            var rightDown = new Position((int)GetPartRightBound(pos, height),
+                                         (int)GetPartDownBound(pos, height));
 
             return new(this, leftUp, rightDown);
         }
+
+        protected long GetPartLeftBound(Position pos, uint height) => Math.Max(0, pos.X - height);
+        protected long GetPartRightBound(Position pos, uint height) => Math.Min(Width - 1, pos.X + height);
+        protected long GetPartUpBound(Position pos, uint height) => Math.Max(0, pos.Y - height);
+        protected long GetPartDownBound(Position pos, uint height) => Math.Min(Height - 1, pos.Y + height);
     }
 }
