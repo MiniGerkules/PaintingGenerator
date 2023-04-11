@@ -12,18 +12,6 @@
             DownY = downY;
         }
 
-        public Bounds(Position pos1, Position pos2, uint radius) {
-            if (pos1.X < pos2.X)
-                (LeftX, RightX) = (pos1.X, pos2.X);
-            else
-                (LeftX, RightX) = (pos2.X, pos1.X);
-
-            if (pos1.Y < pos2.Y)
-                (UpY, DownY) = (pos1.Y, pos2.Y);
-            else
-                (UpY, DownY) = (pos2.Y, pos1.Y);
-        }
-
         public bool XInBounds(int x) => LeftX <= x && x <= RightX;
         public bool YInBounds(int y) => UpY <= y && y <= DownY;
         public bool InBounds(Position pos) => XInBounds(pos.X) && YInBounds(pos.Y);
