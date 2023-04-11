@@ -275,27 +275,26 @@ namespace PaintingsGenerator.Images {
 
         public RGBColor GetColor(Position pos, uint height) {
             ulong red = 0, green = 0, blue = 0;
-            var part = GetPart(pos, height);
+            var part = GetCirclePart(pos, height);
 
-            for (int y = 0; y < part.Height; ++y) {
-                for (int x = 0; x < part.Width; ++x)
-                    UnpuckWithAdd(part[y, x], ref red, ref green, ref blue);
+            ulong partSize = 0;
+            foreach (var elem in part) {
+                ++partSize;
+                UnpuckWithAdd(elem, ref red, ref green, ref blue);
             }
 
-            return new((byte)(red/part.Size), (byte)(green/part.Size),
-                       (byte)(blue/part.Size));
+            return new((byte)(red/partSize), (byte)(green/partSize),
+                       (byte)(blue/partSize));
         }
 
         public double GetColorError(Position pos, uint height, RGBColor avgColor) {
-            var part = GetPart(pos, height);
+            var part = GetCirclePart(pos, height);
             double error = 0.0;
 
-            for (int y = 0; y < part.Height; ++y) {
-                for (int x = 0; x < part.Width; ++x) {
-                    error += Math.Pow(part[y, x].Red - avgColor.Red, 2);
-                    error += Math.Pow(part[y, x].Green - avgColor.Green, 2);
-                    error += Math.Pow(part[y, x].Blue - avgColor.Blue, 2);
-                }
+            foreach (var elem in part) {
+                error += Math.Pow(elem.Red - avgColor.Red, 2);
+                error += Math.Pow(elem.Green - avgColor.Green, 2);
+                error += Math.Pow(elem.Blue - avgColor.Blue, 2);
             }
 
             return error;
