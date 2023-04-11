@@ -6,30 +6,31 @@ namespace PaintingsGenerator.Images.ImageStuff {
     internal class PositionManager {
         private readonly HashSet<Position> positions = new();
         public ImmutableHashSet<Position> StoredPositions => positions.ToImmutableHashSet();
+        
+        private Bounds bounds = new(0, 0, 0, 0);
+        private double k = 0;
 
         public void StoreStrokePositions(Position start, Position end, uint radius) {
-            var bounds = new Bounds(start, end, radius);
-            var k_norm = (double)(end.Y-start.Y) / (end.X-start.X);
+            bounds = new Bounds(start, end, radius);
+            k = (double)(end.Y-start.Y) / (end.X-start.X);
 
-            if (double.IsInfinity(k_norm)) { // Vertical
-                StorePositionsAlongVertical(bounds, start, end, k_norm, radius);
-            } else if (Math.Abs(k_norm) <= 1e-5) { // Horizontal
-                StorePositionsAlongHorizontal(bounds, start, end, k_norm, radius);
+            if (double.IsInfinity(k)) { // Vertical
+                StorePositionsAlongVertical(start, end, radius);
+            } else if (Math.Abs(k) <= 1e-5) { // Horizontal
+                StorePositionsAlongHorizontal(start, end, radius);
             } else { // With another angle
-                StorePositionsAlongLine(bounds, start, end, k_norm, radius);
+                StorePositionsAlongLine(start, end, radius);
             }
 
-            StoreRoundPart(bounds, start, radius);
-            StoreRoundPart(bounds, end, radius);
+            StoreRoundPart(start, radius);
+            StoreRoundPart(end, radius);
         }
 
-        private void StorePositionsAlongVertical(Bounds bounds, Position start,
-                                                 Position end, double k, uint radius) {
+        private void StorePositionsAlongVertical(Position start, Position end, uint radius) {
             if (start.Y > end.Y) (start, end) = (end, start);
 
-            var storePositions = (Bounds bounds, Position pos, uint radius) => {
-                StorePositionsSymmetrically(bounds, pos, radius,
-                                            (int additionX) => additionX,
+            var storePositions = (Position pos, uint radius) => {
+                StorePositionsSymmetrically(pos, radius, (int additionX) => additionX,
                                             (int additionY) => 0);
             };
 
@@ -37,17 +38,15 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 int curY = y + start.Y;
                 int curX = (int)(y/k) + start.X;
 
-                storePositions(bounds, new(curX, curY), radius);
+                storePositions(new(curX, curY), radius);
             }
         }
 
-        private void StorePositionsAlongHorizontal(Bounds bounds, Position start,
-                                                   Position end, double k, uint radius) {
+        private void StorePositionsAlongHorizontal(Position start, Position end, uint radius) {
             if (start.X > end.X) (start, end) = (end, start);
 
-            var storePositions = (Bounds bounds, Position pos, uint radius) => {
-                StorePositionsSymmetrically(bounds, pos, radius,
-                                            (int additionX) => 0,
+            var storePositions = (Position pos, uint radius) => {
+                StorePositionsSymmetrically(pos, radius, (int additionX) => 0,
                                             (int additionY) => additionY);
             };
 
@@ -55,11 +54,11 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 int curX = x + start.X;
                 int curY = (int)(k*x) + start.Y;
 
-                storePositions(bounds, new(curX, curY), radius);
+                storePositions(new(curX, curY), radius);
             }
         }
 
-        private void StorePositionsSymmetrically(Bounds bounds, Position pos, uint radius,
+        private void StorePositionsSymmetrically(Position pos, uint radius,
                                                  Func<int, int> additionX,
                                                  Func<int, int> additionY) {
             positions.Add(pos);
@@ -73,13 +72,11 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
         }
 
-        private void StorePositionsAlongLine(Bounds bounds, Position start, Position end,
-                                             double k, uint radius) {
+        private void StorePositionsAlongLine(Position start, Position end, uint radius) {
             if (start.X > end.X) (start, end) = (end, start);
 
             int biasX = (int)(radius * Math.Abs(Math.Sin(Math.Atan(k))));
-
-            StorePositionsBetween(start, end, bounds, k, biasX, radius);
+            StorePositionsBetween(start, end, biasX, radius);
 
             int stepBack = (int)(radius * Math.Sin(Math.Atan(k))) * (k < 0 ? -1 : 1);
             int stepDown = (int)(radius * Math.Cos(Math.Atan(k))) * (k < 0 ? -1 : 1);
@@ -88,17 +85,16 @@ namespace PaintingsGenerator.Images.ImageStuff {
             int startY = start.Y + stepDown;
             int maxY = Math.Max(end.Y + stepDown, start.Y + stepDown);
             var limitY1Y2 = (int y1, int y2) => (y1, Math.Min(y2, maxY));
-            StoreEdgePositions(bounds, 0, biasX + stepBack, startX, startY, limitY1Y2, k);
+            StoreEdgePositions(0, biasX + stepBack, startX, startY, limitY1Y2);
 
             startX = end.X + stepBack;
             startY = end.Y - stepDown;
             int minY = Math.Min(end.Y - stepDown, start.Y - stepDown);
             limitY1Y2 = (int y1, int y2) => (Math.Max(y1, minY), y2);
-            StoreEdgePositions(bounds, -(biasX + stepBack), 0, startX, startY, limitY1Y2, k);
+            StoreEdgePositions(-(biasX + stepBack), 0, startX, startY, limitY1Y2);
         }
 
-        private void StorePositionsBetween(Position start, Position end,
-                                           Bounds bounds, double k, int biasX, uint radius) {
+        private void StorePositionsBetween(Position start, Position end, int biasX, uint radius) {
             int halfOfLen = (int)(radius / Math.Sin(Math.PI/2 - Math.Atan(k)));
             var getY1Y2 = (int x) => {
                 int yBias = (int)(k*x) + start.Y;
@@ -108,12 +104,12 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 return (y1, y2);
             };
 
-            StoreNewPositions(bounds, biasX + 1, end.X - start.X - biasX - 1, start.X, getY1Y2);
+            StoreNewPositions(biasX + 1, end.X - start.X - biasX - 1, start.X, getY1Y2);
         }
 
-        private void StoreEdgePositions(Bounds bounds, int startX, int endX, int biasX,
-                                        int biasY, Func<int, int, (int, int)> limitY1Y2, double k) {
-            double kPerp = -1 / k;
+        private void StoreEdgePositions(int startX, int endX, int biasX, int biasY,
+                                        Func<int, int, (int, int)> limitY1Y2) {
+            double kPerp = -1.0 / k;
 
             var getY1Y2 = (int x) => {
                 int y1 = (int)(k*x) + biasY;
@@ -124,10 +120,10 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 return (y1, y2);
             };
 
-            StoreNewPositions(bounds, startX, endX, biasX, getY1Y2);
+            StoreNewPositions(startX, endX, biasX, getY1Y2);
         }
 
-        private void StoreNewPositions(Bounds bounds, int startX, int endX, int biasX,
+        private void StoreNewPositions(int startX, int endX, int biasX,
                                        Func<int, (int, int)> getY1Y2) {
             for (int x = startX; x <= endX; ++x) {
                 var (y1, y2) = getY1Y2(x);
@@ -139,7 +135,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
         }
 
-        private void StoreRoundPart(Bounds bounds, Position pos, uint radius) {
+        private void StoreRoundPart(Position pos, uint radius) {
             for (int x = (int)-radius; x <= radius; ++x) {
                 var curX = pos.X + x;
                 if (!bounds.XInBounds(curX)) continue;
