@@ -118,10 +118,10 @@ namespace PaintingsGenerator {
             if (!GetBounds().InBounds(pos))
                 throw new Exception("Can't get data from the required position!");
 
-            var leftUp = new Position((int)GetPartLeftBound(pos, height),
-                                      (int)GetPartUpBound(pos, height));
-            var rightDown = new Position((int)GetPartRightBound(pos, height),
-                                         (int)GetPartDownBound(pos, height));
+            var leftUp = new Position(GetPartLeftBound(pos, height),
+                                      GetPartUpBound(pos, height));
+            var rightDown = new Position(GetPartRightBound(pos, height),
+                                         GetPartDownBound(pos, height));
 
             return new(this, leftUp, rightDown);
         }
@@ -133,10 +133,10 @@ namespace PaintingsGenerator {
             return new(this, pos, radius);
         }
 
-        protected long GetPartLeftBound(Position pos, uint height) => Math.Max(0, pos.X - height);
-        protected long GetPartRightBound(Position pos, uint height) => Math.Min(Width - 1, pos.X + height);
-        protected long GetPartUpBound(Position pos, uint height) => Math.Max(0, pos.Y - height);
-        protected long GetPartDownBound(Position pos, uint height) => Math.Min(Height - 1, pos.Y + height);
+        protected int GetPartLeftBound(Position pos, uint height) => (int)Math.Max(0, pos.X - height);
+        protected int GetPartRightBound(Position pos, uint height) => (int)Math.Min(Width - 1, pos.X + height);
+        protected int GetPartUpBound(Position pos, uint height) => (int)Math.Max(0, pos.Y - height);
+        protected int GetPartDownBound(Position pos, uint height) => (int)Math.Min(Height - 1, pos.Y + height);
 
         protected Bounds GetBounds() => new(0, Width - 1, 0, Height - 1);
 
@@ -144,19 +144,19 @@ namespace PaintingsGenerator {
             int leftX, rightX, upY, downY;
 
             if (angle1.X < angle2.X) {
-                leftX = (int)GetPartLeftBound(angle1, height);
-                rightX = (int)GetPartRightBound(angle2, height);
+                leftX = GetPartLeftBound(angle1, height);
+                rightX = GetPartRightBound(angle2, height);
             } else {
-                leftX = (int)GetPartLeftBound(angle2, height);
-                rightX = (int)GetPartRightBound(angle1, height);
+                leftX = GetPartLeftBound(angle2, height);
+                rightX = GetPartRightBound(angle1, height);
             }
 
             if (angle1.Y < angle2.Y) {
-                upY = (int)GetPartUpBound(angle1, height);
-                downY = (int)GetPartDownBound(angle2, height);
+                upY = GetPartUpBound(angle1, height);
+                downY = GetPartDownBound(angle2, height);
             } else {
-                upY = (int)GetPartUpBound(angle2, height);
-                downY = (int)GetPartDownBound(angle1, height);
+                upY = GetPartUpBound(angle2, height);
+                downY = GetPartDownBound(angle1, height);
             }
 
             return new(leftX, rightX, upY, downY);
