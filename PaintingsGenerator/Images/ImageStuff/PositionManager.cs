@@ -10,8 +10,8 @@ namespace PaintingsGenerator.Images.ImageStuff {
         private Bounds bounds = new(0, 0, 0, 0);
         private double k = 0;
 
-        public void StoreStrokePositions(Position start, Position end, uint radius) {
-            bounds = new Bounds(start, end, radius);
+        public void StoreStrokePositions(Bounds bounds, Position start, Position end, uint radius) {
+            this.bounds = bounds;
             k = (double)(end.Y-start.Y) / (end.X-start.X);
 
             if (double.IsInfinity(k)) { // Vertical
