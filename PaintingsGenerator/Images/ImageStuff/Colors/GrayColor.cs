@@ -1,5 +1,5 @@
 ﻿namespace PaintingsGenerator.Colors {
-    public struct GrayColor : IToDoubleConvertable {
+    public record struct GrayColor : IToDoubleConvertable {
         public byte Gray { get; }
         public double Value => Gray;
 

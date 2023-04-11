@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace PaintingsGenerator.Colors {
-    public struct RGBColor {
+    public record struct RGBColor {
         public byte Red { get; }
         public byte Green { get; }
         public byte Blue { get; }
