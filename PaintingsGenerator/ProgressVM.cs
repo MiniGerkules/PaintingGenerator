@@ -1,4 +1,6 @@
-﻿namespace PaintingsGenerator {
+﻿using System;
+
+namespace PaintingsGenerator {
     internal class ProgressVM : NotifierOfPropertyChange {
         private string status = "";
         private uint maxProgress = 100;
@@ -15,8 +17,8 @@
         public uint CurProgress {
             get => curProgress;
             set {
+                curProgress = Math.Min(value, MaxProgress);
                 status = $"{curProgress}/{maxProgress}";
-                curProgress = value;
 
                 NotifyPropertyChanged(nameof(Status));
                 NotifyPropertyChanged(nameof(CurProgress));

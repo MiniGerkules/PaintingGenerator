@@ -31,7 +31,7 @@
             
             <Image x:Name="reference" Grid.Column="0" Margin="5 5 2.5 5"/>
             <Image d:DataContext="{d:DesignInstance Type=local:ImageProcessorVM}"
-                x:Name="newImage" Grid.Column="1" Margin="2.5 5 5 5" Source="{Binding Bitmap}"/>
+                x:Name="newImage" Grid.Column="1" Margin="2.5 5 5 5" Source="{Binding Painting}"/>
         </Grid>
 
         <StatusBar Grid.Row="2" d:DataContext="{d:DesignInstance Type=local:ProgressVM}">

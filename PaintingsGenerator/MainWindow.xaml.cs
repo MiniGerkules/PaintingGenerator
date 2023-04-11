@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Media.Imaging;
 
 using Microsoft.Win32;
@@ -21,8 +20,9 @@ namespace PaintingsGenerator {
             };
 
             if (fileDialog.ShowDialog() == true) {
-                var bitmap = new BitmapImage(new (fileDialog.FileName));
-                reference.Source = bitmap;
+                var template = new BitmapImage(new (fileDialog.FileName));
+                reference.Source = template;
+                imageProcessor.Process(template);
             } else {
                 MessageBox.Show("You don't choose a file!", "ERROR!",
                                 MessageBoxButton.OK, MessageBoxImage.Error);

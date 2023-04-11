@@ -8,20 +8,38 @@ using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator.Images {
     internal class RGBImage : Image<RGBColor> {
-        private record class RGBImagePart(RGBImage FullImagePixels,
-                                          Position LeftUp, Position RightDown) {
-            public int Width => RightDown.X - LeftUp.X;
-            public int Height => RightDown.Y - LeftUp.Y;
-            public ulong Size => (ulong)Width * (ulong)Height;
+        private record class Bounds {
+            public int LeftX { get; }
+            public int RightX { get; }
+            public int UpY { get; }
+            public int DownY { get; }
 
-            public RGBColor this[int i, int j] {
-                get => FullImagePixels[i + LeftUp.Y, j + LeftUp.X];
+            public Bounds(int leftX, int rightX, int upY, int downY) {
+                LeftX = leftX;
+                RightX = rightX;
+                UpY = upY;
+                DownY = downY;
+            }
+
+            public bool XInBounds(int x) => LeftX <= x && x <= RightX;
+            public bool YInBounds(int y) => UpY <= y && y <= DownY;
+            public bool InBounds(Position pos) => XInBounds(pos.X) && YInBounds(pos.Y);
+        }
+
+        private record class StrokeRestorer {
+            public StrokePositions Positions { get; }
+            public List<RGBColor> OldColors { get; }
+
+            public StrokeRestorer(StrokePositions positions, List<RGBColor> colors) {
+                Positions = positions;
+                OldColors = colors;
             }
         }
 
         public static readonly PixelFormat FORMAT = PixelFormats.Rgb24;
         public static readonly int BYTES_PER_PIXEL = (FORMAT.BitsPerPixel + 7) / 8;
 
+        private StrokeRestorer? toRestor = null;
         private StrokePositions? lastStrokePositions = null;
         private List<RGBColor>? colorsToRecover = null;
 
@@ -30,40 +48,34 @@ namespace PaintingsGenerator.Images {
         }
 
         public RGBImage(BitmapSource imageToHandle)
-                : this(imageToHandle.PixelHeight, imageToHandle.PixelWidth) {
+                : this(imageToHandle.PixelWidth, imageToHandle.PixelHeight) {
             if (imageToHandle.Format != FORMAT)
                 imageToHandle = ConverFormat(imageToHandle);
 
-            byte[] vals = new byte[BYTES_PER_PIXEL * imageToHandle.PixelWidth * imageToHandle.PixelHeight];
-            imageToHandle.CopyPixels(vals, BYTES_PER_PIXEL * imageToHandle.PixelWidth, 0);
+            byte[] vals = new byte[BYTES_PER_PIXEL * Width * Height];
+            imageToHandle.CopyPixels(vals, BYTES_PER_PIXEL * Width, 0);
 
             for (int i = 0; i < Height; ++i) {
                 for (int j = 0; j < Width; ++j) {
-                    int blockStart = i * BYTES_PER_PIXEL * imageToHandle.PixelWidth + j * BYTES_PER_PIXEL;
+                    int blockStart = i*BYTES_PER_PIXEL*Width + j*BYTES_PER_PIXEL;
                     this[i, j] = GetPixel(vals[blockStart..(blockStart + BYTES_PER_PIXEL)]);
                 }
-            }
-        }
-
-        public RGBImage(RGBImage other, Position leftUp, Position rightDown)
-                : this(rightDown.X - leftUp.X + 1, rightDown.Y - leftUp.Y + 1) {
-            for (int i = leftUp.Y; i <= rightDown.Y; ++i) {
-                for (int j = leftUp.X; j <= rightDown.X; ++j)
-                    this[i, j] = other[i, j];
             }
         }
         #endregion
 
         public BitmapSource ToBitmap() {
             int stride = Width * BYTES_PER_PIXEL;
-            var pixels = new byte[Height, stride];
+            var pixels = new byte[Height * stride];
 
             if (FORMAT == PixelFormats.Rgb24) {
                 for (int y = 0; y < Height; ++y) {
-                    for (int x = 0; x < stride; x += 3) {
-                        pixels[y, x + 0] = this[y, x].Red;
-                        pixels[y, x + 1] = this[y, x].Green;
-                        pixels[y, x + 2] = this[y, x].Blue;
+                    for (int x = 0; x < Width; ++x) {
+                        var curPtr = 3*(y*Width + x);
+
+                        pixels[curPtr + 0] = this[y, x].Red;
+                        pixels[curPtr + 1] = this[y, x].Green;
+                        pixels[curPtr + 2] = this[y, x].Blue;
                     }
                 }
             } else {
@@ -78,17 +90,206 @@ namespace PaintingsGenerator.Images {
         }
 
         public override void AddStroke(Stroke<RGBColor> stroke) {
-            lastStrokePositions = stroke.Positions;
+            if (stroke.Positions.Count == 0) return;
+
+            lastStrokePositions = new();
             colorsToRecover = new(lastStrokePositions.Count);
 
-            foreach (var pos in stroke.Positions) {
-                colorsToRecover.Add(this[pos.Y, pos.X]);
-                this[pos.Y, pos.X] = new(stroke.Color.Red, stroke.Color.Green, stroke.Color.Blue);
+            var positions = new StrokePositions();
+            for (int i = 0; i < stroke.Positions.Count - 1; ++i) {
+                var curPos = stroke.Positions[i];
+                var nextPos = stroke.Positions[i + 1];
+
+                positions.Add(GetPositions(curPos, nextPos, stroke.Height));
             }
+
+            positions.MakeUnique();
+
+            foreach (var pos in positions) {
+                lastStrokePositions.Add(pos);
+                colorsToRecover.Add(this[pos.Y, pos.X]);
+
+                this[pos.Y, pos.X] = stroke.Color;
+            }
+        }
+
+        private StrokePositions GetPositions(Position start, Position end, uint radius) {
+            var bounds = GetBounds(start, end, radius);
+            var k_norm = (double)(end.Y-start.Y) / (end.X-start.X);
+            StrokePositions positions;
+
+            if (double.IsInfinity(k_norm)) { // Vertical
+                positions = GetPositionsAlongVertical(bounds, start, end, k_norm, radius);
+            } else if (Math.Abs(k_norm) <= 1e-5) { // Horizontal
+                positions = GetPositionsAlongHorizontal(bounds, start, end, k_norm, radius);
+            } else { // With another angle
+                positions = GetPositionsAlongLine(bounds, start, end, k_norm, radius);
+            }
+
+            positions.Add(GetRoundPart(bounds, start, radius));
+            positions.Add(GetRoundPart(bounds, end, radius));
+
+            return positions;
+        }
+
+        private static StrokePositions GetPositionsAlongVertical(Bounds bounds, Position start,
+                                                                 Position end, double k,
+                                                                 uint radius) {
+            if (start.Y > end.Y) (start, end) = (end, start);
+
+            var positions = new StrokePositions();
+            var getPositions = (Bounds bounds, Position pos, uint radius) => {
+                return GetPositionsSymmetrically(bounds, pos, radius, (int a) => a, (int a) => 0);
+            };
+
+            for (int y = 0, endY = end.Y - start.Y + 1; y < endY; ++y) {
+                int curY = y + start.Y;
+                int curX = (int)(y/k) + start.X;
+
+                positions.Add(getPositions(bounds, new(curX, curY), radius));
+            }
+
+            return positions;
+        }
+
+        private static StrokePositions GetPositionsAlongHorizontal(Bounds bounds, Position start,
+                                                                   Position end, double k,
+                                                                   uint radius) {
+            if (start.X > end.X) (start, end) = (end, start);
+
+            var positions = new StrokePositions();
+            var getPositions = (Bounds bounds, Position pos, uint radius) => {
+                return GetPositionsSymmetrically(bounds, pos, radius, (int a) => 0, (int a) => a);
+            };
+
+            for (int x = 0, endX = end.X - start.X + 1; x < endX; ++x) {
+                int curX = x + start.X;
+                int curY = (int)(k*x) + start.Y;
+
+                positions.Add(getPositions(bounds, new(curX, curY), radius));
+            }
+
+            return positions;
+        }
+
+        private static StrokePositions GetPositionsSymmetrically(Bounds bounds, Position pos,
+                                                                 uint radius, Func<int, int> additionX,
+                                                                 Func<int, int> additionY) {
+            var positions = new StrokePositions { pos };
+
+            for (int i = 1; i <= radius; ++i) {
+                var posPositive = new Position(pos.X + additionX(i), pos.Y + additionY(i));
+                var posNegative = new Position(pos.X - additionX(i), pos.Y - additionY(i));
+
+                if (bounds.InBounds(posPositive)) positions.Add(posPositive);
+                if (bounds.InBounds(posNegative)) positions.Add(posNegative);
+            }
+
+            return positions;
+        }
+
+        private static StrokePositions GetPositionsAlongLine(Bounds bounds, Position start,
+                                                             Position end, double k,
+                                                             uint radius) {
+            if (start.X > end.X) (start, end) = (end, start);
+
+            int biasX = (int)(radius * Math.Abs(Math.Sin(Math.Atan(k))));
+            var positions = new StrokePositions();
+
+            AddPositionsBetween(start, end, bounds, positions, k, biasX, radius);
+
+            int stepBack = (int)(radius * Math.Sin(Math.Atan(k))) * (k < 0 ? -1 : 1);
+            int stepDown = (int)(radius * Math.Cos(Math.Atan(k))) * (k < 0 ? -1 : 1);
+
+            int startX = start.X - stepBack;
+            int startY = start.Y + stepDown;
+            int maxY = Math.Max(end.Y + stepDown, start.Y + stepDown);
+            var limitY1Y2 = (int y1, int y2) => (y1, Math.Min(y2, maxY));
+            AddEdgePositions(positions, bounds, 0, biasX + stepBack, startX, startY, limitY1Y2, k);
+
+            startX = end.X + stepBack;
+            startY = end.Y - stepDown;
+            int minY = Math.Min(end.Y - stepDown, start.Y - stepDown);
+            limitY1Y2 = (int y1, int y2) => (Math.Max(y1, minY), y2);
+            AddEdgePositions(positions, bounds, -(biasX + stepBack), 0, startX, startY, limitY1Y2, k);
+
+            return positions;
+        }
+
+        private static void AddPositionsBetween(Position start, Position end,
+                                                Bounds bounds, StrokePositions positions,
+                                                double k, int biasX, uint radius) {
+            int halfOfLen = (int)(radius / Math.Sin(Math.PI/2 - Math.Atan(k)));
+            var getY1Y2 = (int x) => {
+                int yBias = (int)(k*x) + start.Y;
+                int y1 = yBias - halfOfLen;
+                int y2 = yBias + halfOfLen;
+
+                return (y1, y2);
+            };
+
+            AddNewPositions(positions, bounds, biasX + 1, end.X - start.X - biasX - 1, start.X, getY1Y2);
+        }
+
+        private static void AddEdgePositions(StrokePositions positions, Bounds bounds,
+                                             int startX, int endX, int biasX, int biasY,
+                                             Func<int, int, (int, int)> limitY1Y2, double k) {
+            double kPerp = -1 / k;
+
+            var getY1Y2 = (int x) => {
+                int y1 = (int)(k*x) + biasY;
+                int y2 = (int)(kPerp*x) + biasY;
+                if (y1 > y2) (y1, y2) = (y2, y1);
+
+                (y1, y2) = limitY1Y2(y1, y2);
+                return (y1, y2);
+            };
+
+            AddNewPositions(positions, bounds, startX, endX, biasX, getY1Y2);
+        }
+
+        private static void AddNewPositions(StrokePositions positions,
+                                            Bounds bounds, int startX, int endX,
+                                            int biasX, Func<int, (int, int)> getY1Y2) {
+            for (int x = startX; x <= endX; ++x) {
+                var (y1, y2) = getY1Y2(x);
+
+                for (int y = y1; y <= y2; ++y) {
+                    var curPos = new Position(biasX + x, y);
+                    if (bounds.InBounds(curPos)) positions.Add(curPos);
+                }
+            }
+        }
+
+        private Bounds GetBounds(Position start, Position end, uint height) {
+            int leftX, rightX, upY, downY;
+
+            if (start.X < end.X) {
+                leftX = (int)GetPartLeftBound(start, height);
+                rightX = (int)GetPartRightBound(end, height);
+            } else {
+                leftX = (int)GetPartLeftBound(end, height);
+                rightX = (int)GetPartRightBound(start, height);
+            }
+
+            if (start.Y < end.Y) {
+                upY = (int)GetPartUpBound(start, height);
+                downY = (int)GetPartDownBound(end, height);
+            } else {
+                upY = (int)GetPartUpBound(end, height);
+                downY = (int)GetPartDownBound(start, height);
+            }
+
+            return new(leftX, rightX, upY, downY);
         }
 
         public void RemoveLastStroke() {
             if (lastStrokePositions == null) return;
+
+            for (int i = 0; i < lastStrokePositions.Count; ++i) {
+                var pos = lastStrokePositions[i];
+                this[pos.Y, pos.X] = colorsToRecover![i];
+            }
 
             int curColor = 0;
             foreach (var pos in lastStrokePositions) {
@@ -114,15 +315,30 @@ namespace PaintingsGenerator.Images {
 
         public RGBColor GetColor(Position pos, uint height) {
             ulong red = 0, green = 0, blue = 0;
-            var part = GetPart(this, pos, height);
+            var part = GetPart(pos, height);
 
             for (int y = 0; y < part.Height; ++y) {
                 for (int x = 0; x < part.Width; ++x)
-                    UnpuckWithAdd(part[pos.Y, pos.X], ref red, ref green, ref blue);
+                    UnpuckWithAdd(part[y, x], ref red, ref green, ref blue);
             }
 
             return new((byte)(red/part.Size), (byte)(green/part.Size),
                        (byte)(blue/part.Size));
+        }
+
+        public double GetColorError(Position pos, uint height, RGBColor avgColor) {
+            var part = GetPart(pos, height);
+            double error = 0.0;
+
+            for (int y = 0; y < part.Height; ++y) {
+                for (int x = 0; x < part.Width; ++x) {
+                    error += Math.Pow(part[y, x].Red - avgColor.Red, 2);
+                    error += Math.Pow(part[y, x].Green - avgColor.Green, 2);
+                    error += Math.Pow(part[y, x].Blue - avgColor.Blue, 2);
+                }
+            }
+
+            return error;
         }
 
         private static void UnpuckWithAdd(RGBColor color, ref ulong red,
@@ -152,59 +368,48 @@ namespace PaintingsGenerator.Images {
                 throw new Exception("Unsupported pixel encoding format!");
         }
 
-        public static double GetDifference(RGBImage a, RGBImage b) {
-            var partA = new RGBImagePart(a, new(0, 0), new(a.Height - 1, a.Width - 1));
-            var partB = new RGBImagePart(b, new(0, 0), new(b.Height - 1, b.Width - 1)); ;
+        public static DifferenceOfImages GetDifference(RGBImage a, RGBImage b) {
+            var partA = new Proxy(a, new(0, 0), new(a.Width - 1, a.Height - 1));
+            var partB = new Proxy(b, new(0, 0), new(b.Width - 1, b.Height - 1));
 
             return GetDifference(partA, partB);
         }
 
-        public static double GetDifference(RGBImage a, RGBImage b, Position pos, uint height) {
-            var partA = GetPart(a, pos, height);
-            var partB = GetPart(b, pos, height);
-
-            return GetDifference(partA, partB);
-        }
-
-        private static double GetDifference(RGBImagePart a, RGBImagePart b) {
+        private static DifferenceOfImages GetDifference(Proxy a, Proxy b) {
             if (a.Width != b.Width || a.Height != b.Height)
                 throw new Exception("Images must be the same size!");
 
-            ulong diff = 0;
+            var diff = new DifferenceOfImages(a.Width, a.Height);
             for (int y = 0; y < a.Height; ++y) {
                 for (int x = 0; x < a.Width; ++x) {
-                    diff += (ulong)Math.Abs(a[y, x].Red - b[y, x].Red);
-                    diff += (ulong)Math.Abs(a[y, x].Green - b[y, x].Green);
-                    diff += (ulong)Math.Abs(a[y, x].Blue - b[y, x].Blue);
+                    ushort pixelDiff = 0;
+                    pixelDiff += (ushort)Math.Abs(a[y, x].Red - b[y, x].Red);
+                    pixelDiff += (ushort)Math.Abs(a[y, x].Green - b[y, x].Green);
+                    pixelDiff += (ushort)Math.Abs(a[y, x].Blue - b[y, x].Blue);
+
+                    diff[y, x] = pixelDiff;
                 }
             }
 
-            return (double)diff / (a.Height * a.Width);
+            return diff;
         }
 
-        /// <summary>
-        /// Extract a part of image from `image` in position `pos` and size of
-        /// side of square == 2*radius + 1
-        /// </summary>
-        /// <param name="image"> Image to extract part </param>
-        /// <param name="pos"> Center of square </param>
-        /// <param name="height"> Height from center square to its side </param>
-        /// <returns> Part of image </returns>
-        /// <exception cref="Exception"> If `pos` don't lie in image bounds </exception>
-        private static RGBImagePart GetPart(RGBImage image, Position pos, uint height) {
-            if (pos.X >= image.Width || pos.Y >= image.Height || pos.X < 0 || pos.Y < 0)
-                throw new Exception("Can't get data from the required position!");
+        private static StrokePositions GetRoundPart(Bounds bounds, Position pos, uint radius) {
+            var positions = new StrokePositions();
+            for (int x = (int)-radius; x <= radius; ++x) {
+                var curX = pos.X + x;
+                if (!bounds.XInBounds(curX)) continue;
 
-            Position leftUp = new(0, image.Width - 1);
-            Position rightDown = new(0, image.Height - 1);
+                for (int y = (int)-radius; y <= radius; ++y) {
+                    var curY = pos.Y + y;
+                    if (!bounds.YInBounds(curY)) continue;
 
-            if (pos.X > height) leftUp.X = pos.X - (int)height;
-            if (pos.X < image.Width - 1 - height) rightDown.X = pos.X + (int)height;
+                    if (x*x + y*y <= radius*radius)
+                        positions.Add(new Position(curX, curY));
+                }
+            }
 
-            if (pos.Y > height) leftUp.Y = pos.Y - (int)height;
-            if (pos.Y < image.Height - 1 - height) rightDown.Y = pos.X + (int)height;
-
-            return new(image, leftUp, rightDown);
+            return positions;
         }
         #endregion
 

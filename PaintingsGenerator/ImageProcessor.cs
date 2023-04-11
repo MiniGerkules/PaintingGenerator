@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Images;
@@ -14,32 +15,43 @@ namespace PaintingsGenerator {
             progressVM = new();
         }
 
-        public async void Process(BitmapSource imageToProcess) {
-            var rgbPainting = RGBImage.CreateEmpty(imageToProcess.PixelWidth, imageToProcess.PixelHeight);
-            var grayPainting = new GrayImage(rgbPainting);
-            var template = new RGBImage(imageToProcess);
+        public async void Process(BitmapSource toProcess, double niceDiff = 5) {
+            var painting = RGBImage.CreateEmpty(toProcess.PixelWidth, toProcess.PixelHeight);
+            var template = new RGBImage(toProcess);
+            var gradient = await Task.Run(() => Gradient.GetGradient(new(template)));
 
-            uint height = 10;           /// !!! Выбрать нормальный способ получения высоты квадрата !!!
-            double curDiff, niceDiff = 5;        /// !!! Выбрать время, когда перестать рисовать             !!!
+            uint height = 65, maxLength = 627;
 
-            do {
-                curDiff = RGBImage.GetDifference(template, rgbPainting);
+            while (true) {
+                var curDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
+                var posWithMaxDiff = Task.Run(() => ImageTools.GetStrokeStartByRand(curDiff, height));
 
-                var posWithMaxDiff = ImageTools.FindPosWithTheHighestDiff(template, rgbPainting, height);
-                var gradient = Gradient.GetGradient(grayPainting);
-                var strokePos = ImageTools.GetStroke(template, gradient, posWithMaxDiff, height);
-                var rgbColor = template.GetColor(strokePos, height);
+                var strokePos = await Task.Run(async () =>
+                    ImageTools.GetStroke(template, gradient, await posWithMaxDiff, height, maxLength)
+                );
+                var rgbColor = Task.Run(() => template.GetColor(strokePos, height));
 
-                rgbPainting.AddStroke(new(strokePos, rgbColor));
-                var newDiff = RGBImage.GetDifference(template, rgbPainting);
+                await Task.Run(async () => painting.AddStroke(new(strokePos, await rgbColor, height)));
+                var newDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
 
-                if (newDiff > curDiff) {
-                    rgbPainting.RemoveLastStroke();
+                double newDiffVal = newDiff.SumDiff(), curDiffVal = curDiff.SumDiff();
+                if (newDiffVal >= curDiffVal) {
+                    painting.RemoveLastStroke();
                 } else {
-                    imageProcessorVM.Bitmap = rgbPainting.ToBitmap();
-                    grayPainting.AddStroke(new(strokePos, new(rgbColor)));
+                    curDiffVal = newDiffVal;
+                    imageProcessorVM.Painting = painting.ToBitmap();
+                    progressVM.CurProgress = GetProgress(niceDiff, curDiffVal);
                 }
-            } while (curDiff > niceDiff);
+
+                if (curDiffVal <= niceDiff) break;
+            }
+        }
+
+        private static uint GetProgress(double curDiff, double niceDiff) {
+            // niceDiff == 100%
+            // curDiff == x%
+
+            return (uint)(curDiff * 100 / niceDiff);
         }
 
         private static BitmapSource CreateEmptyBitmap(int width = 100, int height = 100,
@@ -53,11 +65,6 @@ namespace PaintingsGenerator {
                 RGBImage.FORMAT, palette,
                 pixels, stride
             );
-        }
-
-        private static BitmapSource CreateEmptyBitmap(BitmapSource template) {
-            return CreateEmptyBitmap(template.PixelWidth, template.PixelHeight,
-                                     template.DpiX, template.DpiY, template.Palette);
         }
     }
 }
