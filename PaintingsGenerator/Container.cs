@@ -14,6 +14,24 @@ namespace PaintingsGenerator {
             }
         }
 
+        protected record class Bounds {
+            public int LeftX { get; }
+            public int RightX { get; }
+            public int UpY { get; }
+            public int DownY { get; }
+
+            public Bounds(int leftX, int rightX, int upY, int downY) {
+                LeftX = leftX;
+                RightX = rightX;
+                UpY = upY;
+                DownY = downY;
+            }
+
+            public bool XInBounds(int x) => LeftX <= x && x <= RightX;
+            public bool YInBounds(int y) => UpY <= y && y <= DownY;
+            public bool InBounds(Position pos) => XInBounds(pos.X) && YInBounds(pos.Y);
+        }
+
         private readonly ElemType[,] elems;
 
         public int Height => elems.GetLength(0);
@@ -53,5 +71,27 @@ namespace PaintingsGenerator {
         protected long GetPartRightBound(Position pos, uint height) => Math.Min(Width - 1, pos.X + height);
         protected long GetPartUpBound(Position pos, uint height) => Math.Max(0, pos.Y - height);
         protected long GetPartDownBound(Position pos, uint height) => Math.Min(Height - 1, pos.Y + height);
+
+        protected Bounds GetBounds(Position start, Position end, uint height) {
+            int leftX, rightX, upY, downY;
+
+            if (start.X < end.X) {
+                leftX = (int)GetPartLeftBound(start, height);
+                rightX = (int)GetPartRightBound(end, height);
+            } else {
+                leftX = (int)GetPartLeftBound(end, height);
+                rightX = (int)GetPartRightBound(start, height);
+            }
+
+            if (start.Y < end.Y) {
+                upY = (int)GetPartUpBound(start, height);
+                downY = (int)GetPartDownBound(end, height);
+            } else {
+                upY = (int)GetPartUpBound(end, height);
+                downY = (int)GetPartDownBound(start, height);
+            }
+
+            return new(leftX, rightX, upY, downY);
+        }
     }
 }

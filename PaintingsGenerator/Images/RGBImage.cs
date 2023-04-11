@@ -8,24 +8,6 @@ using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator.Images {
     internal class RGBImage : Image<RGBColor> {
-        private record class Bounds {
-            public int LeftX { get; }
-            public int RightX { get; }
-            public int UpY { get; }
-            public int DownY { get; }
-
-            public Bounds(int leftX, int rightX, int upY, int downY) {
-                LeftX = leftX;
-                RightX = rightX;
-                UpY = upY;
-                DownY = downY;
-            }
-
-            public bool XInBounds(int x) => LeftX <= x && x <= RightX;
-            public bool YInBounds(int y) => UpY <= y && y <= DownY;
-            public bool InBounds(Position pos) => XInBounds(pos.X) && YInBounds(pos.Y);
-        }
-
         private record class StrokeRestorer {
             public StrokePositions Positions { get; }
             public List<RGBColor> OldColors { get; }
@@ -259,28 +241,6 @@ namespace PaintingsGenerator.Images {
                     if (bounds.InBounds(curPos)) positions.Add(curPos);
                 }
             }
-        }
-
-        private Bounds GetBounds(Position start, Position end, uint height) {
-            int leftX, rightX, upY, downY;
-
-            if (start.X < end.X) {
-                leftX = (int)GetPartLeftBound(start, height);
-                rightX = (int)GetPartRightBound(end, height);
-            } else {
-                leftX = (int)GetPartLeftBound(end, height);
-                rightX = (int)GetPartRightBound(start, height);
-            }
-
-            if (start.Y < end.Y) {
-                upY = (int)GetPartUpBound(start, height);
-                downY = (int)GetPartDownBound(end, height);
-            } else {
-                upY = (int)GetPartUpBound(end, height);
-                downY = (int)GetPartDownBound(start, height);
-            }
-
-            return new(leftX, rightX, upY, downY);
         }
 
         public void RemoveLastStroke() {
