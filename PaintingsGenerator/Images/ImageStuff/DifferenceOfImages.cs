@@ -1,29 +1,29 @@
 ﻿namespace PaintingsGenerator.Images.ImageStuff {
     internal class DifferenceOfImages : Container<ushort> {
+        public ulong SumDiff { get; private set; } = 0;
+        public double ScaledDiff => SumDiff / Size;
+
         public DifferenceOfImages(int width, int height) : base(new ushort[height, width]) {
         }
 
-        public double SumDiff() {
-            ulong diffSum = 0;
-
-            for (int y = 0; y < Height; ++y) {
-                for (int x = 0; x < Width; ++x)
-                    diffSum += this[y, x];
+        override public ushort this[int i, int j] {
+            get => base[i, j];
+            set {
+                SumDiff -= base[i, j];
+                SumDiff += value;
+                base[i, j] = value;
             }
-
-            return (double)diffSum / (Width*Height);
         }
 
-        public double GetDifference(Position pos, uint height) {
-            var part = GetPart(pos, height);
+        public ulong GetSumDifference(Position pos, uint height) {
+            var part = GetCirclePart(pos, height);
 
             ulong diff = 0;
-            for (int y = 0; y < part.Height; ++y) {
-                for (int x = 0; x < part.Width; ++x)
-                    diff += part[y, x];
+            foreach (var elem in part) {
+                diff += elem;
             }
 
-            return (double)diff / part.Size;
+            return diff;
         }
     }
 }

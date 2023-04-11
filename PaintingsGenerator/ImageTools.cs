@@ -13,12 +13,12 @@ namespace PaintingsGenerator {
         public static Position GetStrokeStartByDiff(DifferenceOfImages diff, uint height) {
             uint startY = 2*height, startX = startY;
             var posWithMaxDiff = new Position((int)startX, (int)startY);
-            var maxDiff = diff.GetDifference(posWithMaxDiff, height);
+            var maxDiff = diff.GetSumDifference(posWithMaxDiff, height);
 
             for (uint y = startY, endY = (uint)(diff.Height - 2*height); y < endY; y += height) {
                 for (uint x = startX, endX = (uint)(diff.Width - 2*height); x < endX; x += height) {
                     var curPos = new Position((int)x, (int)y);
-                    var curDiff = diff.GetDifference(curPos, height);
+                    var curDiff = diff.GetSumDifference(curPos, height);
 
                     if (curDiff > maxDiff) {
                         maxDiff = curDiff;
@@ -31,10 +31,10 @@ namespace PaintingsGenerator {
         }
 
         public static Position GetStrokeStartByRand(DifferenceOfImages diff, uint height) {
-            var possibleStarts = new List<KeyValuePair<Position, double>>();
+            var possibleStarts = new List<KeyValuePair<Position, ulong>>();
             for (int i = 0; i < 20; ++i) {
                 var start = new Position(rand.Next(0, diff.Width), rand.Next(0, diff.Height));
-                var difference = diff.GetDifference(start, height);
+                var difference = diff.GetSumDifference(start, height);
 
                 possibleStarts.Add(new(start, difference));
             }
