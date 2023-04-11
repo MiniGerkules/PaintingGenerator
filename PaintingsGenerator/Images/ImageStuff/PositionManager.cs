@@ -12,58 +12,56 @@ namespace PaintingsGenerator.Images.ImageStuff {
             var k_norm = (double)(end.Y-start.Y) / (end.X-start.X);
 
             if (double.IsInfinity(k_norm)) { // Vertical
-                GetPositionsAlongVertical(bounds, start, end, k_norm, radius);
+                StorePositionsAlongVertical(bounds, start, end, k_norm, radius);
             } else if (Math.Abs(k_norm) <= 1e-5) { // Horizontal
-                GetPositionsAlongHorizontal(bounds, start, end, k_norm, radius);
+                StorePositionsAlongHorizontal(bounds, start, end, k_norm, radius);
             } else { // With another angle
-                GetPositionsAlongLine(bounds, start, end, k_norm, radius);
+                StorePositionsAlongLine(bounds, start, end, k_norm, radius);
             }
 
-            GetRoundPart(bounds, start, radius);
-            GetRoundPart(bounds, end, radius);
+            StoreRoundPart(bounds, start, radius);
+            StoreRoundPart(bounds, end, radius);
         }
 
-        private void GetPositionsAlongVertical(Bounds bounds, Position start,
-                                               Position end, double k,
-                                               uint radius) {
+        private void StorePositionsAlongVertical(Bounds bounds, Position start,
+                                                 Position end, double k, uint radius) {
             if (start.Y > end.Y) (start, end) = (end, start);
 
-            var getPositions = (Bounds bounds, Position pos, uint radius) => {
-                GetPositionsSymmetrically(bounds, pos, radius,
-                                         (int additionX) => additionX,
-                                         (int additionY) => 0);
+            var storePositions = (Bounds bounds, Position pos, uint radius) => {
+                StorePositionsSymmetrically(bounds, pos, radius,
+                                            (int additionX) => additionX,
+                                            (int additionY) => 0);
             };
 
             for (int y = 0, endY = end.Y - start.Y + 1; y < endY; ++y) {
                 int curY = y + start.Y;
                 int curX = (int)(y/k) + start.X;
 
-                getPositions(bounds, new(curX, curY), radius);
+                storePositions(bounds, new(curX, curY), radius);
             }
         }
 
-        private void GetPositionsAlongHorizontal(Bounds bounds, Position start,
-                                                 Position end, double k,
-                                                 uint radius) {
+        private void StorePositionsAlongHorizontal(Bounds bounds, Position start,
+                                                   Position end, double k, uint radius) {
             if (start.X > end.X) (start, end) = (end, start);
 
-            var getPositions = (Bounds bounds, Position pos, uint radius) => {
-                GetPositionsSymmetrically(bounds, pos, radius,
-                                         (int additionX) => 0,
-                                         (int additionY) => additionY);
+            var storePositions = (Bounds bounds, Position pos, uint radius) => {
+                StorePositionsSymmetrically(bounds, pos, radius,
+                                            (int additionX) => 0,
+                                            (int additionY) => additionY);
             };
 
             for (int x = 0, endX = end.X - start.X + 1; x < endX; ++x) {
                 int curX = x + start.X;
                 int curY = (int)(k*x) + start.Y;
 
-                getPositions(bounds, new(curX, curY), radius);
+                storePositions(bounds, new(curX, curY), radius);
             }
         }
 
-        private void GetPositionsSymmetrically(Bounds bounds, Position pos,
-                                               uint radius, Func<int, int> additionX,
-                                               Func<int, int> additionY) {
+        private void StorePositionsSymmetrically(Bounds bounds, Position pos, uint radius,
+                                                 Func<int, int> additionX,
+                                                 Func<int, int> additionY) {
             positions.Add(pos);
 
             for (int i = 1; i <= radius; ++i) {
@@ -75,14 +73,13 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
         }
 
-        private void GetPositionsAlongLine(Bounds bounds, Position start,
-                                           Position end, double k,
-                                           uint radius) {
+        private void StorePositionsAlongLine(Bounds bounds, Position start, Position end,
+                                             double k, uint radius) {
             if (start.X > end.X) (start, end) = (end, start);
 
             int biasX = (int)(radius * Math.Abs(Math.Sin(Math.Atan(k))));
 
-            AddPositionsBetween(start, end, bounds, k, biasX, radius);
+            StorePositionsBetween(start, end, bounds, k, biasX, radius);
 
             int stepBack = (int)(radius * Math.Sin(Math.Atan(k))) * (k < 0 ? -1 : 1);
             int stepDown = (int)(radius * Math.Cos(Math.Atan(k))) * (k < 0 ? -1 : 1);
@@ -91,18 +88,17 @@ namespace PaintingsGenerator.Images.ImageStuff {
             int startY = start.Y + stepDown;
             int maxY = Math.Max(end.Y + stepDown, start.Y + stepDown);
             var limitY1Y2 = (int y1, int y2) => (y1, Math.Min(y2, maxY));
-            AddEdgePositions(bounds, 0, biasX + stepBack, startX, startY, limitY1Y2, k);
+            StoreEdgePositions(bounds, 0, biasX + stepBack, startX, startY, limitY1Y2, k);
 
             startX = end.X + stepBack;
             startY = end.Y - stepDown;
             int minY = Math.Min(end.Y - stepDown, start.Y - stepDown);
             limitY1Y2 = (int y1, int y2) => (Math.Max(y1, minY), y2);
-            AddEdgePositions(bounds, -(biasX + stepBack), 0, startX, startY, limitY1Y2, k);
+            StoreEdgePositions(bounds, -(biasX + stepBack), 0, startX, startY, limitY1Y2, k);
         }
 
-        private void AddPositionsBetween(Position start, Position end,
-                                         Bounds bounds,
-                                         double k, int biasX, uint radius) {
+        private void StorePositionsBetween(Position start, Position end,
+                                           Bounds bounds, double k, int biasX, uint radius) {
             int halfOfLen = (int)(radius / Math.Sin(Math.PI/2 - Math.Atan(k)));
             var getY1Y2 = (int x) => {
                 int yBias = (int)(k*x) + start.Y;
@@ -112,12 +108,11 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 return (y1, y2);
             };
 
-            AddNewPositions(bounds, biasX + 1, end.X - start.X - biasX - 1, start.X, getY1Y2);
+            StoreNewPositions(bounds, biasX + 1, end.X - start.X - biasX - 1, start.X, getY1Y2);
         }
 
-        private void AddEdgePositions(Bounds bounds,
-                                      int startX, int endX, int biasX, int biasY,
-                                      Func<int, int, (int, int)> limitY1Y2, double k) {
+        private void StoreEdgePositions(Bounds bounds, int startX, int endX, int biasX,
+                                        int biasY, Func<int, int, (int, int)> limitY1Y2, double k) {
             double kPerp = -1 / k;
 
             var getY1Y2 = (int x) => {
@@ -129,12 +124,11 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 return (y1, y2);
             };
 
-            AddNewPositions(bounds, startX, endX, biasX, getY1Y2);
+            StoreNewPositions(bounds, startX, endX, biasX, getY1Y2);
         }
 
-        private void AddNewPositions(Bounds bounds,
-                                     int startX, int endX, int biasX,
-                                     Func<int, (int, int)> getY1Y2) {
+        private void StoreNewPositions(Bounds bounds, int startX, int endX, int biasX,
+                                       Func<int, (int, int)> getY1Y2) {
             for (int x = startX; x <= endX; ++x) {
                 var (y1, y2) = getY1Y2(x);
 
@@ -145,7 +139,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
         }
 
-        private void GetRoundPart(Bounds bounds, Position pos, uint radius) {
+        private void StoreRoundPart(Bounds bounds, Position pos, uint radius) {
             for (int x = (int)-radius; x <= radius; ++x) {
                 var curX = pos.X + x;
                 if (!bounds.XInBounds(curX)) continue;
