@@ -2,13 +2,14 @@
 using System.Linq;
 using System.Collections.Generic;
 
-using PaintingsGenerator.Colors;
 using PaintingsGenerator.Images;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator {
     internal class ImageTools {
+        private static readonly Random rand = new();
+
         public static Position GetStrokeStartByDiff(DifferenceOfImages diff, uint height) {
             uint startY = 2*height, startX = startY;
             var posWithMaxDiff = new Position((int)startX, (int)startY);
@@ -30,8 +31,6 @@ namespace PaintingsGenerator {
         }
 
         public static Position GetStrokeStartByRand(DifferenceOfImages diff, uint height) {
-            var rand = new Random();
-
             var possibleStarts = new List<KeyValuePair<Position, double>>();
             for (int i = 0; i < 20; ++i) {
                 var start = new Position(rand.Next(0, diff.Width), rand.Next(0, diff.Height));
