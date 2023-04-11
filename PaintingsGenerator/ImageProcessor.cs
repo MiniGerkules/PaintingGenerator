@@ -66,10 +66,5 @@ namespace PaintingsGenerator {
                 pixels, stride
             );
         }
-
-        private static BitmapSource CreateEmptyBitmap(BitmapSource template) {
-            return CreateEmptyBitmap(template.PixelWidth, template.PixelHeight,
-                                     template.DpiX, template.DpiY, template.Palette);
-        }
     }
 }
