@@ -7,13 +7,14 @@ namespace PaintingsGenerator.Images.ImageStuff {
         public Position this[int i] => positions[i];
         public int Count => positions.Count;
 
-        public void Add(Position position) => positions.Add(position);
-
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public IEnumerator<Position> GetEnumerator() {
             foreach (var pos in positions)
                 yield return pos;
         }
+
+        public void Add(Position position) => positions.Add(position);
+        public void Add(StrokePositions strokePositions) => positions.AddRange(strokePositions);
     }
 }
