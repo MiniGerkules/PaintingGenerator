@@ -187,65 +187,85 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
         }
 
-        private void StorePositionsAlongLine(Position start, Position end, uint radius) {
-            if (start.X > end.X) (start, end) = (end, start);
+        public void StorePositionsAlongLine(StrokePivot left, StrokePivot right) {
+            var centerBound = new LineFunc(left.Position, right.Position);
+            int startX = new int[] { left.Position.X-(int)left.Radius, right.Position.X-(int)right.Radius }.Min();
+            int endX = new int[] { left.Position.X+(int)left.Radius, right.Position.X+(int)right.Radius }.Max();
 
-            int biasX = (int)(radius * Math.Abs(Math.Sin(Math.Atan(k))));
-            StorePositionsBetween(start, end, biasX, radius);
+            LineFunc leftBound, rightBound, lowerBound, upperBound;
+            if (Math.Abs(Math.Atan(centerBound.K)) > Math.PI/4) {
+                (leftBound, rightBound, lowerBound, upperBound) = GetFuncBounds(
+                    Math.Sign(centerBound.K) == 1, lowerBoundFunc,
+                    centerBound.IsVertical() ? upperBoundFunc : centerBound,
+                    lowerBoundFunc, left.Position, right.Position
+                );
+            } else {
+                leftBound = lowerBoundFunc.GetPerp(left.Position);
+                rightBound = lowerBoundFunc.GetPerp(right.Position);
+                lowerBound = lowerBoundFunc;
+                upperBound = centerBound;
+            }
+            int startY = new int[] { left.Position.Y-(int)left.Radius, right.Position.Y-(int)right.Radius }.Min();
+            int endY = new int[] { left.Position.Y, right.Position.Y }.Max();
+            StoreInBounds(new(startX, startY), new(endX, endY), leftBound.CountX,
+                          rightBound.CountX, lowerBound.CountY, upperBound.CountY);
 
-            int stepBack = (int)(radius * Math.Sin(Math.Atan(k))) * (k < 0 ? -1 : 1);
-            int stepDown = (int)(radius * Math.Cos(Math.Atan(k))) * (k < 0 ? -1 : 1);
-
-            int startX = start.X - stepBack;
-            int startY = start.Y + stepDown;
-            int maxY = Math.Max(end.Y + stepDown, start.Y + stepDown);
-            var limitY1Y2 = (int y1, int y2) => (y1, Math.Min(y2, maxY));
-            StoreEdgePositions(0, biasX + stepBack, startX, startY, limitY1Y2);
-
-            startX = end.X + stepBack;
-            startY = end.Y - stepDown;
-            int minY = Math.Min(end.Y - stepDown, start.Y - stepDown);
-            limitY1Y2 = (int y1, int y2) => (Math.Max(y1, minY), y2);
-            StoreEdgePositions(-(biasX + stepBack), 0, startX, startY, limitY1Y2);
+            if (Math.Abs(Math.Atan(centerBound.K)) > Math.PI/4) {
+                (leftBound, rightBound, lowerBound, upperBound) = GetFuncBounds(
+                    Math.Sign(centerBound.K) == 1,
+                    centerBound.IsVertical() ? lowerBoundFunc : centerBound,
+                    upperBoundFunc, upperBoundFunc, left.Position, right.Position
+                );
+            } else {
+                leftBound = upperBoundFunc.GetPerp(left.Position);
+                rightBound = upperBoundFunc.GetPerp(right.Position);
+                lowerBound = centerBound;
+                upperBound = upperBoundFunc;
+            }
+            startY = new int[] { left.Position.Y, right.Position.Y }.Min();
+            endY = new int[] { left.Position.Y+(int)left.Radius, right.Position.Y+(int)right.Radius }.Max();
+            StoreInBounds(new(startX, startY), new(endX, endY), leftBound.CountX,
+                          rightBound.CountX, lowerBound.CountY, upperBound.CountY);
         }
 
-        private void StorePositionsBetween(Position start, Position end, int biasX, uint radius) {
-            int halfOfLen = (int)(radius / Math.Sin(Math.PI/2 - Math.Atan(k)));
-            var getY1Y2 = (int x) => {
-                int yBias = (int)(k*x) + start.Y;
-                int y1 = yBias - halfOfLen;
-                int y2 = yBias + halfOfLen;
+        private static (LineFunc, LineFunc, LineFunc, LineFunc) GetFuncBounds(
+                bool isRised, LineFunc lowerBoundFunc, LineFunc upperBoundFunc,
+                LineFunc endpointsBoundIdentifier, Position left, Position right) {
+            LineFunc leftBound, rightBound, lowerBound, upperBound;
 
-                return (y1, y2);
-            };
+            if (isRised) {
+                leftBound = upperBoundFunc;
+                rightBound = lowerBoundFunc;
 
-            StoreNewPositions(biasX + 1, end.X - start.X - biasX - 1, start.X, getY1Y2);
+                lowerBound = endpointsBoundIdentifier.GetPerp(left);
+                upperBound = endpointsBoundIdentifier.GetPerp(right);
+            } else {
+                leftBound = lowerBoundFunc;
+                rightBound = upperBoundFunc;
+
+                lowerBound = endpointsBoundIdentifier.GetPerp(right);
+                upperBound = endpointsBoundIdentifier.GetPerp(left);
+            }
+
+            return (leftBound, rightBound, lowerBound, upperBound);
         }
 
-        private void StoreEdgePositions(int startX, int endX, int biasX, int biasY,
-                                        Func<int, int, (int, int)> limitY1Y2) {
-            double kPerp = -1.0 / k;
+        private void StoreInBounds(Position start, Position end,
+                                   Func<double, double> countLeftBoundX,
+                                   Func<double, double> countRightBoundX,
+                                   Func<double, double> countLowerBoundY,
+                                   Func<double, double> countUpperBoundY) {
+            for (int x = start.X; x <= end.X; ++x) {
+                for (int y = start.Y; y <= end.Y; ++y) {
+                    int leftX = (int)Math.Round(countLeftBoundX(y));
+                    int rightX = (int)Math.Round(countRightBoundX(y));
+                    int lowerY = (int)Math.Round(countLowerBoundY(x));
+                    int upperY = (int)Math.Round(countUpperBoundY(x));
 
-            var getY1Y2 = (int x) => {
-                int y1 = (int)(k*x) + biasY;
-                int y2 = (int)(kPerp*x) + biasY;
-                if (y1 > y2) (y1, y2) = (y2, y1);
-
-                (y1, y2) = limitY1Y2(y1, y2);
-                return (y1, y2);
-            };
-
-            StoreNewPositions(startX, endX, biasX, getY1Y2);
-        }
-
-        private void StoreNewPositions(int startX, int endX, int biasX,
-                                       Func<int, (int, int)> getY1Y2) {
-            for (int x = startX; x <= endX; ++x) {
-                var (y1, y2) = getY1Y2(x);
-
-                for (int y = y1; y <= y2; ++y) {
-                    var curPos = new Position(biasX + x, y);
-                    if (bounds.InBounds(curPos)) positions.Add(curPos);
+                    if (leftX <= x && x <= rightX && lowerY <= y && y <= upperY) {
+                        var pos = new Position(x, y);
+                        if (bounds.InBounds(pos)) positions.Add(pos);
+                    }
                 }
             }
         }
