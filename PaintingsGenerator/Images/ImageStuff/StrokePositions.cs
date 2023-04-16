@@ -16,11 +16,5 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
         public void Add(StrokePivot position) => positions.Add(position);
         public void Add(StrokePositions strokePositions) => positions.AddRange(strokePositions);
-
-        public void MakeUnique() {
-            var unique = new HashSet<Position>(positions);
-            positions = unique.ToList();
-            positions.Sort((Position a, Position b) => a.X - b.X);
-        }
     }
 }
