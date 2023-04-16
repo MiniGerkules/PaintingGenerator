@@ -81,7 +81,7 @@ namespace PaintingsGenerator.Images {
             for (int i = 0; i < stroke.Positions.Count - 1; ++i) {
                 var curPos = stroke.Positions[i];
                 var nextPos = stroke.Positions[i + 1];
-                var bounds = GetBounds(curPos, nextPos, stroke.Radius);
+                var bounds = GetBounds(curPos.Position, curPos.Radius, nextPos.Position, nextPos.Radius);
 
                 positions.StoreStrokePositions(bounds, curPos, nextPos, stroke.Radius);
             }
