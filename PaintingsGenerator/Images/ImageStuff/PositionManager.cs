@@ -44,6 +44,8 @@ namespace PaintingsGenerator.Images.ImageStuff {
             this.bounds = bounds;
             if (start.Position.X > end.Position.X) (start, end) = (end, start);
 
+            InitBoundFuncs(start, end);
+
             if (lowerBoundFunc.IsVertical() || upperBoundFunc.IsVertical()) {
                 StorePositionsAlongVertical(start, end);
             } else if (lowerBoundFunc.IsHorizontal() || upperBoundFunc.IsHorizontal()) {
