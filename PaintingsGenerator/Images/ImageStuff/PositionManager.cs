@@ -35,24 +35,24 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
         private readonly HashSet<Position> positions = new();
         public ImmutableHashSet<Position> StoredPositions => positions.ToImmutableHashSet();
-        
+
         private Bounds bounds = new(0, 0, 0, 0);
         private double k = 0;
 
-        public void StoreStrokePositions(Bounds bounds, Position start, Position end, uint radius) {
+        public void StoreStrokePositions(Bounds bounds, StrokePivot start, StrokePivot end) {
             this.bounds = bounds;
-            k = (double)(end.Y-start.Y) / (end.X-start.X);
+            if (start.Position.X > end.Position.X) (start, end) = (end, start);
 
-            if (double.IsInfinity(k)) { // Vertical
-                StorePositionsAlongVertical(start, end, radius);
-            } else if (Math.Abs(k) <= 1e-5) { // Horizontal
-                StorePositionsAlongHorizontal(start, end, radius);
-            } else { // With another angle
-                StorePositionsAlongLine(start, end, radius);
+            if (lowerBoundFunc.IsVertical() || upperBoundFunc.IsVertical()) {
+                StorePositionsAlongVertical(start, end);
+            } else if (lowerBoundFunc.IsHorizontal() || upperBoundFunc.IsHorizontal()) {
+                StorePositionsAlongHorizontal(start, end);
+            } else {
+                StorePositionsAlongLine(start, end);
             }
 
-            StoreRoundPart(start, radius);
-            StoreRoundPart(end, radius);
+            StoreRoundPart(start);
+            StoreRoundPart(end);
         }
 
         private void StorePositionsAlongVertical(Position start, Position end, uint radius) {
