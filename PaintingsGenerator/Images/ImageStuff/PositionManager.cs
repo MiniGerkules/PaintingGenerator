@@ -37,7 +37,8 @@ namespace PaintingsGenerator.Images.ImageStuff {
         public ImmutableHashSet<Position> StoredPositions => positions.ToImmutableHashSet();
 
         private Bounds bounds = new(0, 0, 0, 0);
-        private double k = 0;
+        private LineFunc upperBoundFunc = new(0, 0);
+        private LineFunc lowerBoundFunc = new(0, 0);
 
         public void StoreStrokePositions(Bounds bounds, StrokePivot start, StrokePivot end) {
             this.bounds = bounds;
@@ -53,6 +54,72 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
             StoreRoundPart(start);
             StoreRoundPart(end);
+        }
+
+        private void InitBoundFuncs(StrokePivot left, StrokePivot right) {
+            var radius = Math.Abs((long)left.Radius - right.Radius);
+
+            if (radius == 0)
+                InitBoundFuncsSameRadius(left, right);
+            else
+                InitBoundFuncsDiffRadius(left, right, (uint)radius);
+        }
+
+        private void InitBoundFuncsSameRadius(StrokePivot left, StrokePivot right) {
+            var centerK = LineFunc.CountK(left.Position, right.Position);
+            var angle = Math.Atan(centerK);
+
+            var stepX = left.Radius * Math.Sin(angle);
+            var stepY = left.Radius * Math.Cos(angle);
+
+            var lowerBoundX = left.Position.X + stepX;
+            var lowerBoundY = left.Position.Y - stepY;
+            var upperBoundX = left.Position.X - stepX;
+            var upperBoundY = left.Position.Y + stepY;
+
+            var bLowBound = lowerBoundY - centerK*lowerBoundX;
+            var bUpBound = upperBoundY - centerK*upperBoundX;
+
+            lowerBoundFunc = new(centerK, bLowBound);
+            upperBoundFunc = new(centerK, bUpBound);
+        }
+
+        private void InitBoundFuncsDiffRadius(StrokePivot left, StrokePivot right, uint radius) {
+            var lenBetweenCenters = Math.Sqrt(Math.Pow(right.Position.X - left.Position.X, 2) +
+                                              Math.Pow(right.Position.Y - left.Position.Y, 2));
+            var angleToTangent = Math.Acos(radius / lenBetweenCenters);
+            var centerLineAngle = Math.Atan(LineFunc.CountK(left.Position, right.Position));
+            var angle1 = Math.PI/2 - angleToTangent + centerLineAngle;
+            var angle2 = angleToTangent + centerLineAngle - Math.PI/2;
+
+            Func<double, (double, double)> getLowerStep, getUpperStep;
+            if (left.Radius > right.Radius && centerLineAngle > 0 ||
+                    left.Radius < right.Radius && centerLineAngle < 0) {
+                getLowerStep = (double radius) => (radius * Math.Sin(angle1), radius * Math.Cos(angle1));
+                getUpperStep = (double radius) => (radius * Math.Sin(angle2), radius * Math.Cos(angle2));
+            } else {
+                getLowerStep = (double radius) => (radius * Math.Sin(angle2), radius * Math.Cos(angle2));
+                getUpperStep = (double radius) => (radius * Math.Sin(angle1), radius * Math.Cos(angle1));
+            }
+
+            var (stepXLeftLower, stepYLeftLower) = getLowerStep(left.Radius);
+            var (stepXRightLower, stepYRightLower) = getLowerStep(right.Radius);
+
+            var (stepXLeftUpper, stepYLeftUpper) = getUpperStep(left.Radius);
+            var (stepXRightUpper, stepYRightUpper) = getUpperStep(right.Radius);
+
+            var upperBoundLeftX = left.Position.X - stepXLeftUpper;
+            var upperBoundRightX = right.Position.X - stepXRightUpper;
+            var upperBoundLeftY = left.Position.Y + stepYLeftUpper;
+            var upperBoundRightY = right.Position.Y + stepYRightUpper;
+
+            var lowerBoundLeftX = left.Position.X + stepXLeftLower;
+            var lowerBoundRightX = right.Position.X + stepXRightLower;
+            var lowerBoundLeftY = left.Position.Y - stepYLeftLower;
+            var lowerBoundRightY = right.Position.Y - stepYRightLower;
+
+            lowerBoundFunc = new(lowerBoundLeftX, lowerBoundLeftY, lowerBoundRightX, lowerBoundRightY);
+            upperBoundFunc = new(upperBoundLeftX, upperBoundLeftY, upperBoundRightX, upperBoundRightY);
         }
 
         private void StorePositionsAlongVertical(Position start, Position end, uint radius) {
