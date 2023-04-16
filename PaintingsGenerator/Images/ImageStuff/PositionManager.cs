@@ -270,16 +270,16 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
         }
 
-        private void StoreRoundPart(Position pos, uint radius) {
-            for (int x = (int)-radius; x <= radius; ++x) {
-                var curX = pos.X + x;
+        private void StoreRoundPart(StrokePivot pivot) {
+            for (int x = (int)-pivot.Radius; x <= pivot.Radius; ++x) {
+                var curX = pivot.Position.X + x;
                 if (!bounds.XInBounds(curX)) continue;
 
-                for (int y = (int)-radius; y <= radius; ++y) {
-                    var curY = pos.Y + y;
+                for (int y = (int)-pivot.Radius; y <= pivot.Radius; ++y) {
+                    var curY = pivot.Position.Y + y;
                     if (!bounds.YInBounds(curY)) continue;
 
-                    if (x*x + y*y <= radius*radius)
+                    if (x*x + y*y <= pivot.Radius*pivot.Radius)
                         positions.Add(new Position(curX, curY));
                 }
             }
