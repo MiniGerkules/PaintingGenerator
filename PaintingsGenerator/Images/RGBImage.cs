@@ -9,10 +9,10 @@ using PaintingsGenerator.Images.ImageStuff;
 namespace PaintingsGenerator.Images {
     internal class RGBImage : Image<RGBColor> {
         private record class StrokeRestorer {
-            public StrokePositions Positions { get; }
+            public List<Position> Positions { get; }
             public List<RGBColor> OldColors { get; }
 
-            public StrokeRestorer(StrokePositions positions, List<RGBColor> colors) {
+            public StrokeRestorer(List<Position> positions, List<RGBColor> colors) {
                 Positions = positions;
                 OldColors = colors;
             }
@@ -22,7 +22,7 @@ namespace PaintingsGenerator.Images {
         public static readonly int BYTES_PER_PIXEL = (FORMAT.BitsPerPixel + 7) / 8;
 
         private StrokeRestorer? toRestor = null;
-        private StrokePositions? lastStrokePositions = null;
+        private List<Position>? lastStrokePositions = null;
         private List<RGBColor>? colorsToRecover = null;
 
         #region Constructors
