@@ -153,19 +153,23 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
         }
 
-        private void StorePositionsAlongHorizontal(Position start, Position end, uint radius) {
-            if (start.X > end.X) (start, end) = (end, start);
+        private void StorePositionsAlongHorizontal(StrokePivot left, StrokePivot right) {
+            if (left.Radius == right.Radius) {
+                for (int x = left.Position.X; x <= right.Position.X; ++x) {
+                    StorePositionsSymmetrically(new(x, left.Position.Y), left.Radius,
+                                                (int additionX) => 0,
+                                                (int additionY) => additionY);
+                }
+            } else {
+                for (int x = left.Position.X; x <= right.Position.X; ++x) {
+                    int yMin = (int)lowerBoundFunc.CountY(x);
+                    int yMax = (int)upperBoundFunc.CountY(x);
 
-            var storePositions = (Position pos, uint radius) => {
-                StorePositionsSymmetrically(pos, radius, (int additionX) => 0,
-                                            (int additionY) => additionY);
-            };
-
-            for (int x = 0, endX = end.X - start.X + 1; x < endX; ++x) {
-                int curX = x + start.X;
-                int curY = (int)(k*x) + start.Y;
-
-                storePositions(new(curX, curY), radius);
+                    for (int y = yMin; y <= yMax; ++y) {
+                        var pos = new Position(x, y);
+                        if (bounds.InBounds(pos)) positions.Add(pos);
+                    }
+                }
             }
         }
 
