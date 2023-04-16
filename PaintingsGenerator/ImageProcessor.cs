@@ -4,6 +4,7 @@ using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Images;
 using PaintingsGenerator.MathStuff;
+using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator {
     internal class ImageProcessor {
@@ -15,13 +16,11 @@ namespace PaintingsGenerator {
             progressVM = new();
         }
 
-        public async void Process(BitmapSource toProcess, double niceDiff = 5) {
+        public async void Process(BitmapSource toProcess, Settings settings) {
             var painting = RGBImage.CreateEmpty(toProcess.PixelWidth, toProcess.PixelHeight);
             var template = new RGBImage(toProcess);
             var gradient = await Task.Run(() => Gradient.GetGradient(new(template)));
             var lastDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
-
-            uint height = 6, maxLength = 627;
 
             while (true) {
                 var posWithMaxDiff = Task.Run(() => ImageTools.GetStrokeStartByRand(lastDiff, height));
@@ -38,10 +37,10 @@ namespace PaintingsGenerator {
                 } else {
                     lastDiff = newDiff;
                     imageProcessorVM.Painting = painting.ToBitmap();
-                    progressVM.CurProgress = GetProgress(niceDiff, lastDiff.ScaledDiff);
+                    progressVM.CurProgress = GetProgress(settings.DiffWithTemplateToStop, lastDiff.ScaledDiff);
                 }
 
-                if (lastDiff.ScaledDiff <= niceDiff) break;
+                if (lastDiff.ScaledDiff <= settings.DiffWithTemplateToStop) break;
             }
         }
 

@@ -22,7 +22,7 @@ namespace PaintingsGenerator {
             if (fileDialog.ShowDialog() == true) {
                 var template = new BitmapImage(new (fileDialog.FileName));
                 reference.Source = template;
-                imageProcessor.Process(template);
+                imageProcessor.Process(template, new());
             } else {
                 MessageBox.Show("You don't choose a file!", "ERROR!",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
