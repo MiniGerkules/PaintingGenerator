@@ -111,22 +111,9 @@ namespace PaintingsGenerator.Images {
             colorsToRecover!.Clear();
         }
 
-        public RGBColor GetColor(StrokePositions positions, uint height) {
+        public RGBColor GetColor(StrokePivot point) {
             ulong red = 0, green = 0, blue = 0;
-            ulong numPositions = (ulong)positions.Count;
-
-            foreach (var pos in positions) {
-                var colorInPos = GetColor(pos, height);
-                UnpuckWithAdd(colorInPos, ref red, ref green, ref blue);
-            }
-
-            return new((byte)(red/numPositions), (byte)(green/numPositions),
-                       (byte)(blue/numPositions));
-        }
-
-        public RGBColor GetColor(Position pos, uint height) {
-            ulong red = 0, green = 0, blue = 0;
-            var part = GetCirclePart(pos, height);
+            var part = GetCirclePart(point.Position, point.Radius);
 
             ulong partSize = 0;
             foreach (var elem in part) {
@@ -138,8 +125,21 @@ namespace PaintingsGenerator.Images {
                        (byte)(blue/partSize));
         }
 
-        public double GetColorError(Position pos, uint height, RGBColor avgColor) {
-            var part = GetCirclePart(pos, height);
+        public RGBColor GetColor(StrokePositions positions) {
+            ulong red = 0, green = 0, blue = 0;
+            ulong numPositions = (ulong)positions.Count;
+
+            foreach (var pos in positions) {
+                var colorInPos = GetColor(pos);
+                UnpuckWithAdd(colorInPos, ref red, ref green, ref blue);
+            }
+
+            return new((byte)(red/numPositions), (byte)(green/numPositions),
+                       (byte)(blue/numPositions));
+        }
+
+        public double GetColorError(StrokePivot point, RGBColor avgColor) {
+            var part = GetCirclePart(point.Position, point.Radius);
             double error = 0.0;
 
             foreach (var elem in part) {
