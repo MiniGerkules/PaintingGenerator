@@ -117,24 +117,16 @@ namespace PaintingsGenerator {
 
         protected Bounds GetBounds() => new(0, Width - 1, 0, Height - 1);
 
-        protected Bounds GetBounds(Position angle1, Position angle2, uint height) {
-            int leftX, rightX, upY, downY;
+        protected Bounds GetBounds(Position pos1, uint rad1, Position pos2, uint rad2) {
+            int leftX = Math.Min(GetPartLeftBound(pos1, rad1),
+                                 GetPartLeftBound(pos2, rad2));
+            int rightX = Math.Max(GetPartRightBound(pos1, rad1),
+                                  GetPartRightBound(pos2, rad2));
 
-            if (angle1.X < angle2.X) {
-                leftX = GetPartLeftBound(angle1, height);
-                rightX = GetPartRightBound(angle2, height);
-            } else {
-                leftX = GetPartLeftBound(angle2, height);
-                rightX = GetPartRightBound(angle1, height);
-            }
-
-            if (angle1.Y < angle2.Y) {
-                upY = GetPartUpBound(angle1, height);
-                downY = GetPartDownBound(angle2, height);
-            } else {
-                upY = GetPartUpBound(angle2, height);
-                downY = GetPartDownBound(angle1, height);
-            }
+            int upY = Math.Min(GetPartUpBound(pos1, rad1),
+                               GetPartUpBound(pos2, rad2));
+            int downY = Math.Max(GetPartDownBound(pos1, rad1),
+                                 GetPartDownBound(pos2, rad2));
 
             return new(leftX, rightX, upY, downY);
         }

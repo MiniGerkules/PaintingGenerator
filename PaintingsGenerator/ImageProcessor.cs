@@ -4,6 +4,7 @@ using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Images;
 using PaintingsGenerator.MathStuff;
+using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator {
     internal class ImageProcessor {
@@ -15,33 +16,29 @@ namespace PaintingsGenerator {
             progressVM = new();
         }
 
-        public async void Process(BitmapSource toProcess, double niceDiff = 5) {
+        public async void Process(BitmapSource toProcess, Settings settings) {
             var painting = RGBImage.CreateEmpty(toProcess.PixelWidth, toProcess.PixelHeight);
             var template = new RGBImage(toProcess);
             var gradient = await Task.Run(() => Gradient.GetGradient(new(template)));
+            var builder = new StrokeBuilder(template, gradient);
             var lastDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
 
-            uint height = 6, maxLength = 627;
-
             while (true) {
-                var posWithMaxDiff = Task.Run(() => ImageTools.GetStrokeStartByRand(lastDiff, height));
-                var strokePos = await Task.Run(async () =>
-                    ImageTools.GetStroke(template, gradient, await posWithMaxDiff, height, maxLength)
-                );
-                var rgbColor = Task.Run(() => template.GetColor(strokePos, height));
+                var strokePos = await Task.Run(() => builder.GetStroke(settings, lastDiff));
+                var rgbColor = await Task.Run(() => template.GetColor(strokePos));
 
-                await Task.Run(async () => painting.AddStroke(new(strokePos, await rgbColor, height)));
+                await Task.Run(() => painting.AddStroke(new(strokePos, rgbColor)));
                 var newDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
 
                 if (newDiff.SumDiff >= lastDiff.SumDiff) {
-                    painting.RemoveLastStroke();
+                    await Task.Run(() => painting.RemoveLastStroke());
                 } else {
                     lastDiff = newDiff;
                     imageProcessorVM.Painting = painting.ToBitmap();
-                    progressVM.CurProgress = GetProgress(niceDiff, lastDiff.ScaledDiff);
+                    progressVM.CurProgress = GetProgress(settings.DiffWithTemplateToStop, lastDiff.ScaledDiff);
                 }
 
-                if (lastDiff.ScaledDiff <= niceDiff) break;
+                if (lastDiff.ScaledDiff <= settings.DiffWithTemplateToStop) break;
             }
         }
 
