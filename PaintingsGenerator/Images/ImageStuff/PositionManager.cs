@@ -122,19 +122,34 @@ namespace PaintingsGenerator.Images.ImageStuff {
             upperBoundFunc = new(upperBoundLeftX, upperBoundLeftY, upperBoundRightX, upperBoundRightY);
         }
 
-        private void StorePositionsAlongVertical(Position start, Position end, uint radius) {
-            if (start.Y > end.Y) (start, end) = (end, start);
+        private void StorePositionsAlongVertical(StrokePivot below, StrokePivot above) {
+            if (below.Position.Y > above.Position.Y) (below, above) = (above, below);
 
-            var storePositions = (Position pos, uint radius) => {
-                StorePositionsSymmetrically(pos, radius, (int additionX) => additionX,
-                                            (int additionY) => 0);
-            };
+            if (below.Radius == above.Radius) {
+                for (int y = below.Position.Y; y <= above.Position.Y; ++y) {
+                    StorePositionsSymmetrically(new(below.Position.X, y), below.Radius,
+                                                (int additionX) => additionX, (int additionY) => 0);
+                }
+            } else {
+                int verticalX;
+                Func<double, double> xCounter;
+                if (upperBoundFunc.IsVertical()) {
+                    verticalX = below.Position.X - (int)below.Radius*Math.Sign(upperBoundFunc.K);
+                    xCounter = lowerBoundFunc.CountX;
+                } else {
+                    verticalX = below.Position.X + (int)below.Radius*Math.Sign(lowerBoundFunc.K);
+                    xCounter = upperBoundFunc.CountX;
+                }
 
-            for (int y = 0, endY = end.Y - start.Y + 1; y < endY; ++y) {
-                int curY = y + start.Y;
-                int curX = (int)(y/k) + start.X;
+                for (int y = below.Position.Y; y <= above.Position.Y; ++y) {
+                    int nonVertX = (int)xCounter(y);
+                    int minX = Math.Min(verticalX, nonVertX), maxX = Math.Max(verticalX, nonVertX);
 
-                storePositions(new(curX, curY), radius);
+                    for (int x = minX; x <= maxX; ++x) {
+                        var pos = new Position(x, y);
+                        if (bounds.InBounds(pos)) positions.Add(pos);
+                    }
+                }
             }
         }
 
