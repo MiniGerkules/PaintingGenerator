@@ -13,7 +13,7 @@ namespace PaintingsGenerator.Images {
 
         public override void AddStroke(Stroke<GrayColor> stroke) {
             foreach (var pos in stroke.Positions)
-                this[pos.Y, pos.X] = new(stroke.Color.Gray);
+                this[pos.Position.Y, pos.Position.X] = new(stroke.Color.Gray);
         }
     }
 }
