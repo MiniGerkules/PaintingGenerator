@@ -2,12 +2,10 @@
     public class Stroke<ColorType> {
         public StrokePositions Positions { get; }
         public ColorType Color { get; }
-        public uint Radius { get; }
 
-        public Stroke(StrokePositions positions, ColorType color, uint radius) {
+        public Stroke(StrokePositions positions, ColorType color) {
             Positions = positions;
             Color = color;
-            Radius = radius;
         }
     }
 }
