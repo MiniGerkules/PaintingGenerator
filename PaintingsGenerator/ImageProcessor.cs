@@ -20,20 +20,18 @@ namespace PaintingsGenerator {
             var painting = RGBImage.CreateEmpty(toProcess.PixelWidth, toProcess.PixelHeight);
             var template = new RGBImage(toProcess);
             var gradient = await Task.Run(() => Gradient.GetGradient(new(template)));
+            var builder = new StrokeBuilder(template, gradient);
             var lastDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
 
             while (true) {
-                var posWithMaxDiff = Task.Run(() => ImageTools.GetStrokeStartByRand(lastDiff, height));
-                var strokePos = await Task.Run(async () =>
-                    ImageTools.GetStroke(template, gradient, await posWithMaxDiff, height, maxLength)
-                );
-                var rgbColor = Task.Run(() => template.GetColor(strokePos, height));
+                var strokePos = await Task.Run(() => builder.GetStroke(settings, lastDiff));
+                var rgbColor = await Task.Run(() => template.GetColor(strokePos));
 
-                await Task.Run(async () => painting.AddStroke(new(strokePos, await rgbColor, height)));
+                await Task.Run(() => painting.AddStroke(new(strokePos, rgbColor)));
                 var newDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
 
                 if (newDiff.SumDiff >= lastDiff.SumDiff) {
-                    painting.RemoveLastStroke();
+                    await Task.Run(() => painting.RemoveLastStroke());
                 } else {
                     lastDiff = newDiff;
                     imageProcessorVM.Painting = painting.ToBitmap();
