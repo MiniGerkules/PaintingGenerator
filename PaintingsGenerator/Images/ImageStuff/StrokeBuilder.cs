@@ -48,12 +48,12 @@ namespace PaintingsGenerator.Images.ImageStuff {
         public static Position GetStrokeStartByDiff(DifferenceOfImages diff, uint radius) {
             uint startY = 2*radius, startX = startY;
             var posWithMaxDiff = new Position((int)startX, (int)startY);
-            var maxDiff = diff.GetSumDifference(posWithMaxDiff, radius);
+            var maxDiff = diff.GetSumDifferenceAt(posWithMaxDiff, radius);
 
             for (uint y = startY, endY = (uint)(diff.Height - 2*radius); y < endY; y += radius) {
                 for (uint x = startX, endX = (uint)(diff.Width - 2*radius); x < endX; x += radius) {
                     var curPos = new Position((int)x, (int)y);
-                    var curDiff = diff.GetSumDifference(curPos, radius);
+                    var curDiff = diff.GetSumDifferenceAt(curPos, radius);
 
                     if (curDiff > maxDiff) {
                         maxDiff = curDiff;
@@ -69,7 +69,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
             var possibleStarts = new List<KeyValuePair<Position, ulong>>();
             for (int i = 0; i < 20; ++i) {
                 var start = new Position(rand.Next(0, diff.Width), rand.Next(0, diff.Height));
-                var difference = diff.GetSumDifference(start, radius);
+                var difference = diff.GetSumDifferenceAt(start, radius);
 
                 possibleStarts.Add(new(start, difference));
             }
