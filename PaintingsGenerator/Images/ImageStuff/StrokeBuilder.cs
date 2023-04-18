@@ -24,6 +24,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
             var peprVec = gradient.GetPerpVector(start.Position);
             var points = new StrokePositions { start };
             var errors = new List<double>() { image.GetColorError(start, image.GetColor(start)) };
+            var maxRadius = start.Radius;
 
             while (true) {
                 peprVec = gradient.GetPerpVector(points[^1].Position, peprVec);
@@ -34,12 +35,15 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 if (!bounds.InBounds(newPos)) break;
 
                 var (newPoint, _, error) = GetNewPivot(settings, newPos, points[^1].Radius);
+                maxRadius = Math.Max(maxRadius, newPoint.Radius);
                 errors.Add(error);
 
                 var strokeErr = errors.Sum() / errors.Count;
-                if (strokeErr > errors[0] * settings.MaxColorDiffInBrushInTimes) break;
+                if (strokeErr > errors[0] * settings.MaxColorDiffInStrokeInTimes) break;
 
                 points.Add(newPoint);
+
+                if (points.GetLen() > (2*maxRadius + 1) * settings.RatioOfLenToWidthLargest) break;
             }
 
             return points;
@@ -48,12 +52,12 @@ namespace PaintingsGenerator.Images.ImageStuff {
         public static Position GetStrokeStartByDiff(DifferenceOfImages diff, uint radius) {
             uint startY = 2*radius, startX = startY;
             var posWithMaxDiff = new Position((int)startX, (int)startY);
-            var maxDiff = diff.GetSumDifference(posWithMaxDiff, radius);
+            var maxDiff = diff.GetSumDifferenceAt(posWithMaxDiff, radius);
 
             for (uint y = startY, endY = (uint)(diff.Height - 2*radius); y < endY; y += radius) {
                 for (uint x = startX, endX = (uint)(diff.Width - 2*radius); x < endX; x += radius) {
                     var curPos = new Position((int)x, (int)y);
-                    var curDiff = diff.GetSumDifference(curPos, radius);
+                    var curDiff = diff.GetSumDifferenceAt(curPos, radius);
 
                     if (curDiff > maxDiff) {
                         maxDiff = curDiff;
@@ -69,7 +73,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
             var possibleStarts = new List<KeyValuePair<Position, ulong>>();
             for (int i = 0; i < 20; ++i) {
                 var start = new Position(rand.Next(0, diff.Width), rand.Next(0, diff.Height));
-                var difference = diff.GetSumDifference(start, radius);
+                var difference = diff.GetSumDifferenceAt(start, radius);
 
                 possibleStarts.Add(new(start, difference));
             }
@@ -78,8 +82,8 @@ namespace PaintingsGenerator.Images.ImageStuff {
         }
 
         private (StrokePivot, RGBColor, double) GetNewPivot(Settings settings, Position pos, uint prevRadius) {
-            var minRadius = (uint)(prevRadius * (1-settings.MaxDiffOfBrushRadInTimes));
-            var maxRadius = (uint)(prevRadius * (1+settings.MaxDiffOfBrushRadInTimes));
+            var minRadius = (uint)(prevRadius * (1-settings.MaxDiffOfBrushRadiusesInTimes));
+            var maxRadius = (uint)(prevRadius * (1+settings.MaxDiffOfBrushRadiusesInTimes));
 
             var pivot = new StrokePivot(pos, minRadius);
             var color = image.GetColor(pivot);

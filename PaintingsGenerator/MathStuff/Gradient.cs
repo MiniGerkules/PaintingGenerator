@@ -68,7 +68,7 @@ namespace PaintingsGenerator.MathStuff {
             double grad_y = dy[position.Y, position.X];
 
             double perp_x = 1;
-            double perp_y = -grad_x * perp_x / grad_y;
+            double perp_y = -grad_x * perp_x / (grad_y != 0.0 ? grad_y : 1.0);
 
             return new(perp_x, perp_y);
         }
