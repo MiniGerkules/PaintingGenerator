@@ -21,7 +21,9 @@ namespace PaintingsGenerator {
             var template = new RGBImage(toProcess);
             var gradient = await Task.Run(() => Gradient.GetGradient(new(template)));
             var builder = new StrokeBuilder(template, gradient);
+
             var lastDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
+            var diffToStop = lastDiff.ScaledDiff * settings.DiffWithTemplateToStopInPercent / 100;
 
             while (true) {
                 var strokePos = await Task.Run(() => builder.GetStroke(settings, lastDiff));
@@ -35,10 +37,10 @@ namespace PaintingsGenerator {
                 } else {
                     lastDiff = newDiff;
                     imageProcessorVM.Painting = painting.ToBitmap();
-                    progressVM.CurProgress = GetProgress(settings.DiffWithTemplateToStop, lastDiff.ScaledDiff);
+                    progressVM.CurProgress = GetProgress(diffToStop, lastDiff.ScaledDiff);
                 }
 
-                if (lastDiff.ScaledDiff <= settings.DiffWithTemplateToStop) break;
+                if (lastDiff.ScaledDiff <= diffToStop) break;
             }
         }
 

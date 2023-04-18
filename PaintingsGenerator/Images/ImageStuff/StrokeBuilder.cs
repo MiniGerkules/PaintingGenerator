@@ -37,7 +37,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 errors.Add(error);
 
                 var strokeErr = errors.Sum() / errors.Count;
-                if (strokeErr > errors[0] * settings.MaxColorDiffInBrushInTimes) break;
+                if (strokeErr > errors[0] * settings.MaxColorDiffInStrokeInTimes) break;
 
                 points.Add(newPoint);
             }
@@ -78,8 +78,8 @@ namespace PaintingsGenerator.Images.ImageStuff {
         }
 
         private (StrokePivot, RGBColor, double) GetNewPivot(Settings settings, Position pos, uint prevRadius) {
-            var minRadius = (uint)(prevRadius * (1-settings.MaxDiffOfBrushRadInTimes));
-            var maxRadius = (uint)(prevRadius * (1+settings.MaxDiffOfBrushRadInTimes));
+            var minRadius = (uint)(prevRadius * (1-settings.MaxDiffOfBrushRadiusesInTimes));
+            var maxRadius = (uint)(prevRadius * (1+settings.MaxDiffOfBrushRadiusesInTimes));
 
             var pivot = new StrokePivot(pos, minRadius);
             var color = image.GetColor(pivot);
