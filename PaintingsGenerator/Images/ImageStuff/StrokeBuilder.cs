@@ -24,6 +24,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
             var peprVec = gradient.GetPerpVector(start.Position);
             var points = new StrokePositions { start };
             var errors = new List<double>() { image.GetColorError(start, image.GetColor(start)) };
+            var maxRadius = start.Radius;
 
             while (true) {
                 peprVec = gradient.GetPerpVector(points[^1].Position, peprVec);
@@ -34,12 +35,15 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 if (!bounds.InBounds(newPos)) break;
 
                 var (newPoint, _, error) = GetNewPivot(settings, newPos, points[^1].Radius);
+                maxRadius = Math.Max(maxRadius, newPoint.Radius);
                 errors.Add(error);
 
                 var strokeErr = errors.Sum() / errors.Count;
                 if (strokeErr > errors[0] * settings.MaxColorDiffInStrokeInTimes) break;
 
                 points.Add(newPoint);
+
+                if (points.GetLen() > (2*maxRadius + 1) * settings.RatioOfLenToWidthLargest) break;
             }
 
             return points;
