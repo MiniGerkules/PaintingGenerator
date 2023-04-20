@@ -29,7 +29,6 @@ namespace PaintingsGenerator.Images.ImageStuff {
             while (true) {
                 peprVec = gradient.GetPerpVector(points[^1].Position, peprVec);
                 peprVec.Normalize();
-                if (peprVec.IsPoint()) break;
 
                 var newPos = GetNewPosition(points[^1].Position, peprVec, 2*points[^1].Radius + 1);
                 if (!IsPositionNice(bounds, settings, newPos, points)) break;
