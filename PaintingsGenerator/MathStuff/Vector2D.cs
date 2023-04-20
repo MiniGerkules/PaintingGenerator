@@ -15,6 +15,10 @@ namespace PaintingsGenerator.MathStuff {
         public Vector2D(Position start, Position end) : this(end.X - start.X, end.Y - start.Y) {
         }
 
+        public static double GetScalarProd(Vector2D vec1, Vector2D vec2) {
+            return vec1.X*vec2.X + vec1.Y*vec2.Y;
+        }
+
         public Vector2D Reverse() => new(-X, -Y);
 
         public void Normalize() {
