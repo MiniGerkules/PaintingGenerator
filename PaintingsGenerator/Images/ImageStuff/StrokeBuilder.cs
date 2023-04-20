@@ -32,7 +32,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 if (peprVec.IsPoint()) break;
 
                 var newPos = GetNewPosition(points[^1].Position, peprVec, 2*points[^1].Radius + 1);
-                if (!bounds.InBounds(newPos)) break;
+                if (!IsPositionNice(bounds, settings, newPos, points)) break;
 
                 var (newPoint, _, error) = GetNewPivot(settings, newPos, points[^1].Radius);
                 maxRadius = Math.Max(maxRadius, newPoint.Radius);
@@ -47,6 +47,21 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
 
             return points;
+        }
+
+        private bool IsPositionNice(Bounds bounds, Settings settings,
+                                    Position newPos, StrokePositions prevPos) {
+            if (!bounds.InBounds(newPos)) return false;
+            if (prevPos.Count < 2) return true;
+
+            var prevSeg = new Vector2D(prevPos[^2].Position, prevPos[^1].Position);
+            var curSeg = new Vector2D(prevPos[^1].Position, newPos);
+
+            var scalProd = Vector2D.GetScalarProd(prevSeg, curSeg);
+            var angle = Math.Acos(scalProd / (prevSeg.Length*curSeg.Length));
+            var res = 180*angle / Math.PI < settings.MaxAngleOfBendingInDegrees;
+
+            return res;
         }
 
         public static Position GetStrokeStartByDiff(DifferenceOfImages diff, uint radius) {
