@@ -16,7 +16,7 @@ namespace PaintingsGenerator {
 
         private void ChooseFileClick(object sender, RoutedEventArgs e) {
             var fileDialog = new OpenFileDialog() {
-                Filter = "Image files|*.jpg;*.png;*.bmp",
+                Filter = "Image files|*.jpg;*jpeg;*.png;*.bmp",
             };
 
             if (fileDialog.ShowDialog() == true) {
