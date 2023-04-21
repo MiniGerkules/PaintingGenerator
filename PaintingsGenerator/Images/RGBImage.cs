@@ -18,9 +18,7 @@ namespace PaintingsGenerator.Images {
             }
         }
 
-        private StrokeRestorer? toRestor = null;
-        private List<Position>? lastStrokePositions = null;
-        private List<RGBColor>? colorsToRecover = null;
+        private StrokeRestorer? toRestore = null;
 
         #region Constructors
         private RGBImage(int width, int height) : base(PixelFormats.Rgb24, new RGBColor[height, width]) {
@@ -71,8 +69,8 @@ namespace PaintingsGenerator.Images {
         public override void AddStroke(Stroke<RGBColor> stroke) {
             if (stroke.Positions.Count == 0) return;
 
-            lastStrokePositions = new();
-            colorsToRecover = new(lastStrokePositions.Count);
+            var positionsToRecover = new List<Position>();
+            var colorsToRecover = new List<RGBColor>();
 
             var positions = new PositionManager();
             for (int i = 0; i < stroke.Positions.Count - 1; ++i) {
@@ -84,28 +82,24 @@ namespace PaintingsGenerator.Images {
             }
 
             foreach (var pos in positions.StoredPositions) {
-                lastStrokePositions.Add(pos);
+                positionsToRecover.Add(pos);
                 colorsToRecover.Add(this[pos.Y, pos.X]);
 
                 this[pos.Y, pos.X] = stroke.Color;
             }
+
+            toRestore = new(positionsToRecover, colorsToRecover);
         }
 
         public void RemoveLastStroke() {
-            if (lastStrokePositions == null) return;
+            if (toRestore == null) return;
 
-            for (int i = 0; i < lastStrokePositions.Count; ++i) {
-                var pos = lastStrokePositions[i];
-                this[pos.Y, pos.X] = colorsToRecover![i];
+            for (int i = 0; i < toRestore.Positions.Count; ++i) {
+                var pos = toRestore.Positions[i];
+                this[pos.Y, pos.X] = toRestore.OldColors[i];
             }
 
-            int curColor = 0;
-            foreach (var pos in lastStrokePositions) {
-                this[pos.Y, pos.X] = colorsToRecover![curColor++];
-            }
-
-            lastStrokePositions = null;
-            colorsToRecover!.Clear();
+            toRestore = null;
         }
 
         public RGBColor GetColor(StrokePivot point) {
