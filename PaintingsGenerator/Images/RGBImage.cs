@@ -45,18 +45,14 @@ namespace PaintingsGenerator.Images {
             int stride = Width * BYTES_PER_PIXEL;
             var pixels = new byte[Height * stride];
 
-            if (FORMAT == PixelFormats.Rgb24) {
-                for (int y = 0; y < Height; ++y) {
-                    for (int x = 0; x < Width; ++x) {
-                        var curPtr = 3*(y*Width + x);
+            for (int y = 0; y < Height; ++y) {
+                for (int x = 0; x < Width; ++x) {
+                    var curPtr = 3*(y*Width + x);
 
-                        pixels[curPtr + 0] = this[y, x].Red;
-                        pixels[curPtr + 1] = this[y, x].Green;
-                        pixels[curPtr + 2] = this[y, x].Blue;
-                    }
+                    pixels[curPtr + 0] = this[y, x].Red;
+                    pixels[curPtr + 1] = this[y, x].Green;
+                    pixels[curPtr + 2] = this[y, x].Blue;
                 }
-            } else {
-                throw new Exception("Unsupported pixel encoding format!");
             }
 
             return BitmapSource.Create(
