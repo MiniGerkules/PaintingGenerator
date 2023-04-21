@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Windows.Media;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
@@ -12,7 +13,8 @@ namespace PaintingsGenerator {
         public readonly ProgressVM progressVM;
 
         public ImageProcessor() {
-            imageProcessorVM = new(CreateEmptyBitmap());
+            var emptyBitmap = CreateEmptyBitmap(PixelFormats.Gray8);
+            imageProcessorVM = new(emptyBitmap, emptyBitmap);
             progressVM = new();
         }
 
@@ -39,7 +41,7 @@ namespace PaintingsGenerator {
                     await Task.Run(() => painting.RemoveLastStroke());
                 } else {
                     lastDiff = newDiff;
-                    imageProcessorVM.Painting = painting.ToBitmap();
+                    imageProcessorVM.PaintingWithoutLibStrokes = painting.ToBitmap();
                     progressVM.CurProgress = GetProgress(diffToStop, lastDiff.ScaledDiff);
                 }
 
@@ -54,15 +56,16 @@ namespace PaintingsGenerator {
             return (uint)(curDiff * 100 / niceDiff);
         }
 
-        private static BitmapSource CreateEmptyBitmap(int width = 100, int height = 100,
+        private static BitmapSource CreateEmptyBitmap(PixelFormat format,
+                                                      int width = 1, int height = 1,
                                                       double dpiX = 96, double dpiY = 96,
                                                       BitmapPalette? palette = null) {
-            int stride = width * RGBImage.BYTES_PER_PIXEL;
+            int stride = width * (format.BitsPerPixel+7) / 8;
             byte[] pixels = Enumerable.Repeat(byte.MaxValue, height*stride).ToArray();
 
             return BitmapSource.Create(
                 width, height, dpiX, dpiY,
-                RGBImage.FORMAT, palette,
+                format, palette,
                 pixels, stride
             );
         }
