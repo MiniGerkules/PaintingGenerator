@@ -18,15 +18,12 @@ namespace PaintingsGenerator.Images {
             }
         }
 
-        public static readonly PixelFormat FORMAT = PixelFormats.Rgb24;
-        public static readonly int BYTES_PER_PIXEL = (FORMAT.BitsPerPixel + 7) / 8;
-
         private StrokeRestorer? toRestor = null;
         private List<Position>? lastStrokePositions = null;
         private List<RGBColor>? colorsToRecover = null;
 
         #region Constructors
-        private RGBImage(int width, int height) : base(new RGBColor[height, width]) {
+        private RGBImage(int width, int height) : base(PixelFormats.Rgb24, new RGBColor[height, width]) {
         }
 
         public RGBImage(BitmapSource imageToHandle)
@@ -151,6 +148,16 @@ namespace PaintingsGenerator.Images {
             return error;
         }
 
+        private BitmapSource ConverFormat(BitmapSource image) {
+            var converter = new FormatConvertedBitmap();
+            converter.BeginInit();
+            converter.Source = image;
+            converter.DestinationFormat = FORMAT;
+            converter.EndInit();
+
+            return converter;
+        }
+
         private static void UnpuckWithAdd(RGBColor color, ref ulong red,
                                           ref ulong green, ref ulong blue) {
             red += color.Red;
@@ -172,10 +179,7 @@ namespace PaintingsGenerator.Images {
 
         #region Getters
         private static RGBColor GetPixel(byte[] pixelBytes) {
-            if (FORMAT == PixelFormats.Rgb24)
-                return new(pixelBytes[0], pixelBytes[1], pixelBytes[2]);
-            else
-                throw new Exception("Unsupported pixel encoding format!");
+            return new(pixelBytes[0], pixelBytes[1], pixelBytes[2]);
         }
 
         public static DifferenceOfImages GetDifference(RGBImage a, RGBImage b) {
@@ -197,16 +201,6 @@ namespace PaintingsGenerator.Images {
             return diff;
         }
         #endregion
-
-        private static BitmapSource ConverFormat(BitmapSource image) {
-            var converter = new FormatConvertedBitmap();
-            converter.BeginInit();
-            converter.Source = image;
-            converter.DestinationFormat = FORMAT;
-            converter.EndInit();
-
-            return converter;
-        }
         #endregion
     }
 }

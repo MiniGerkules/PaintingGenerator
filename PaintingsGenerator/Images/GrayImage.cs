@@ -1,10 +1,11 @@
 ﻿using PaintingsGenerator.Colors;
 using PaintingsGenerator.Images.ImageStuff;
+using System.Windows.Media;
 
 namespace PaintingsGenerator.Images {
     internal class GrayImage : Image<GrayColor> {
         public GrayImage(RGBImage rgbImage)
-                : base(new GrayColor[rgbImage.Height, rgbImage.Width]) {
+                : base(PixelFormats.Gray8, new GrayColor[rgbImage.Height, rgbImage.Width]) {
             for (int y = 0; y < Height; y++) {
                 for (int x = 0; x < Width; x++)
                     this[y, x] = new(rgbImage[y, x]);
