@@ -30,11 +30,12 @@ namespace PaintingsGenerator.Images {
                 }
             }
 
-            return BitmapSource.Create(
-                Width, Height, 96, 96,
-                FORMAT, null,
-                pixels, stride
+            var painting =  BitmapSource.Create(
+                Width, Height, 96, 96, FORMAT, null, pixels, stride
             );
+            painting.Freeze();
+
+            return painting;
         }
     }
 }
