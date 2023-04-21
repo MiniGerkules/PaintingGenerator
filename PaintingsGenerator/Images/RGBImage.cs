@@ -43,7 +43,7 @@ namespace PaintingsGenerator.Images {
         }
         #endregion
 
-        public BitmapSource ToBitmap() {
+        public override BitmapSource ToBitmap() {
             int stride = Width * BYTES_PER_PIXEL;
             var pixels = new byte[Height * stride];
 
