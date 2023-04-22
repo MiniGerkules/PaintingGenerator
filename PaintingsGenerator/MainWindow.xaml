@@ -23,7 +23,7 @@
             <MenuItem Header="Choose file" Click="ChooseFileClick"/>
         </Menu>
 
-        <Grid Grid.Row="1">
+        <Grid x:Name="imageDisplayer" Grid.Row="1" d:DataContext="{d:DesignInstance Type=local:ImageProcessorVM}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -31,13 +31,11 @@
             </Grid.ColumnDefinitions>
             
             <Image x:Name="reference" Grid.Column="0" Margin="5 5 2.5 5"/>
-            <Image d:DataContext="{d:DesignInstance Type=local:ImageProcessorVM}"
-                x:Name="newImage" Grid.Column="1" Margin="2.5 5 5 5" Source="{Binding PaintingWithoutLibStrokes}"/>
-            <Image d:DataContext="{d:DesignInstance Type=local:ImageProcessorVM}"
-                x:Name="newImageWithStrokes" Grid.Column="2" Margin="2.5 5 5 5" Source="{Binding PaintingWithLibStrokes}"/>
+            <Image Grid.Column="1" Margin="2.5 5 5 5" Source="{Binding PaintingWithoutLibStrokes, Mode=OneWay, IsAsync=True}"/>
+            <Image Grid.Column="2" Margin="2.5 5 5 5" Source="{Binding PaintingWithLibStrokes, Mode=OneWay, IsAsync=True}"/>
         </Grid>
 
-        <StatusBar Grid.Row="2" d:DataContext="{d:DesignInstance Type=local:ProgressVM}">
+        <StatusBar x:Name="statusBar" Grid.Row="2" d:DataContext="{d:DesignInstance Type=local:ProgressVM}">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Grid>
@@ -51,11 +49,11 @@
             </StatusBar.ItemsPanel>
 
             <StatusBarItem Grid.Column="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                <TextBlock x:Name="status" Text="{Binding Status, Mode=OneWay}"/>
+                <TextBlock TextAlignment="Center" Text="{Binding Status, Mode=OneWay, IsAsync=True}"/>
             </StatusBarItem>
             <Separator Grid.Column="1"/>
             <StatusBarItem Grid.Column="2" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                <ProgressBar x:Name="progressBar" Minimum="0" Maximum="{Binding MaxProgress, Mode=OneWay}"
+                <ProgressBar Minimum="0" Maximum="{Binding MaxProgress, Mode=OneWay, IsAsync=True}"
                              Value="{Binding CurProgress, Mode=OneWay}"/>
             </StatusBarItem>
         </StatusBar>

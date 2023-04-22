@@ -10,8 +10,8 @@ namespace PaintingsGenerator {
         public MainWindow() {
             InitializeComponent();
 
-            newImage.DataContext = imageProcessor.imageProcessorVM;
-            progressBar.DataContext = imageProcessor.progressVM;
+            imageDisplayer.DataContext = imageProcessor.imageProcessorVM;
+            statusBar.DataContext = imageProcessor.progressVM;
         }
 
         private void ChooseFileClick(object sender, RoutedEventArgs e) {
