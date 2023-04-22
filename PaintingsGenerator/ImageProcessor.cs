@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Images;
+using PaintingsGenerator.Colors;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.Images.ImageStuff;
 
@@ -20,10 +21,12 @@ namespace PaintingsGenerator {
         }
 
         public async void Process(BitmapSource toProcess, Settings settings) {
-            var painting = RGBImage.CreateEmpty(toProcess.PixelWidth, toProcess.PixelHeight);
             var template = new RGBImage(toProcess);
             var gradient = await Task.Run(() => Gradient.GetGradient(new(template)));
             var builder = new StrokeBuilder(template, gradient);
+
+            var painting = RGBImage.CreateEmpty(toProcess.PixelWidth, toProcess.PixelHeight);
+            var libStrokesImg = new ImageWithLibStrokes(toProcess.PixelWidth, toProcess.PixelHeight);
 
             var lastDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
             var diffToStop = lastDiff.ScaledDiff * settings.DiffWithTemplateToStopInPercent / 100;
@@ -35,15 +38,17 @@ namespace PaintingsGenerator {
                     continue;
 
                 var rgbColor = await Task.Run(() => template.GetColor(strokePos));
+                var newStroke = new Stroke<RGBColor>(strokePos, rgbColor);
+                await Task.Run(() => painting.AddStroke(newStroke));
 
-                await Task.Run(() => painting.AddStroke(new(strokePos, rgbColor)));
                 var newDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
-
                 if (newDiff.SumDiff >= lastDiff.SumDiff) {
                     await Task.Run(() => painting.RemoveLastStroke());
                 } else {
                     lastDiff = newDiff;
-                    await UpdateView(painting, null, maxDiff, lastDiff.ScaledDiff, diffToStop);
+                    await Task.Run(() => libStrokesImg.AddStroke(newStroke));
+                    libStrokesImg.SaveStroke();
+                    await UpdateView(painting, libStrokesImg, maxDiff, lastDiff.ScaledDiff, diffToStop);
                 }
 
                 if (lastDiff.ScaledDiff <= diffToStop) break;
@@ -51,15 +56,15 @@ namespace PaintingsGenerator {
         }
 
         private async Task UpdateView(RGBImage paintingWithoutLib,
-                                      ImageWithLibStrokes? paintingWithLib,
+                                      ImageWithLibStrokes paintingWithLib,
                                       double maxDiff, double curDiff, double diffToStop) {
             var paintWithoutLib = Task.Run(() => paintingWithoutLib.ToBitmap());
-            //var paintWithLib = Task.Run(() => paintingWithLib.ToBitmap());
+            var paintWithLib = Task.Run(() => paintingWithLib.ToBitmap());
 
             progressVM.CurProgress = GetProgress(maxDiff, curDiff, diffToStop);
 
             imageProcessorVM.PaintingWithoutLibStrokes = await paintWithoutLib;
-            //imageProcessorVM.PaintingWithLibStrokes = await paintWithLib;
+            imageProcessorVM.PaintingWithLibStrokes = await paintWithLib;
         }
 
         private static uint GetProgress(double maxDiff, double curDiff, double diffToStop) {
