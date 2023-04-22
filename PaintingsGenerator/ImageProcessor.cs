@@ -88,11 +88,12 @@ namespace PaintingsGenerator {
             int stride = width * (format.BitsPerPixel+7) / 8;
             byte[] pixels = Enumerable.Repeat(byte.MaxValue, height*stride).ToArray();
 
-            return BitmapSource.Create(
-                width, height, dpiX, dpiY,
-                format, palette,
-                pixels, stride
+            var bitmap = BitmapSource.Create(
+                width, height, dpiX, dpiY, format, palette, pixels, stride
             );
+            bitmap.Freeze();
+
+            return bitmap;
         }
     }
 }
