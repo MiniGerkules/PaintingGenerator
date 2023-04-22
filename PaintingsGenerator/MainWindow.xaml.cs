@@ -1,7 +1,10 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Media.Imaging;
 
 using Microsoft.Win32;
+
+using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator {
     public partial class MainWindow : Window {
@@ -14,6 +17,15 @@ namespace PaintingsGenerator {
             statusBar.DataContext = imageProcessor.progressVM;
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e) {
+            try {
+                StrokeLibManager.LoadStrokesLib();
+            } catch (Exception error) {
+                MessageBox.Show(error.Message, "ERROR!", MessageBoxButton.OK, MessageBoxImage.Error);
+                Close();
+            }
+        }
+
         private void ChooseFileClick(object sender, RoutedEventArgs e) {
             var fileDialog = new OpenFileDialog() {
                 Filter = "Image files|*.jpg;*.png;*.bmp",
@@ -21,6 +33,8 @@ namespace PaintingsGenerator {
 
             if (fileDialog.ShowDialog() == true) {
                 var template = new BitmapImage(new (fileDialog.FileName));
+                if (template.CanFreeze) template.Freeze();
+                
                 reference.Source = template;
                 imageProcessor.Process(template, new());
             } else {
