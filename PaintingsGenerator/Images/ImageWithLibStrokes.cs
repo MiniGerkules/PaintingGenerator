@@ -51,7 +51,6 @@ namespace PaintingsGenerator.Images {
         public BitmapSource ToBitmap() {
             var drawingVisual = new DrawingVisual();
             using (var drawingContext = drawingVisual.RenderOpen()) {
-                //drawingContext.PushTransform(new TranslateTransform(-drawing.Bounds.X, -drawing.Bounds.Y));
                 drawingContext.DrawDrawing(freezedPainting);
             }
 
