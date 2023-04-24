@@ -21,7 +21,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 downBound = Math.Min(downBound, pos.Position.Y - (int)pos.Radius);
             }
 
-            return new(leftBound, rightBound, upBound, downBound);
+            return new(leftBound, rightBound, downBound, upBound);
         }
     }
 }
