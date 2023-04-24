@@ -23,7 +23,11 @@ namespace PaintingsGenerator.MathStuff {
 
         public double CountX(double y) => (y-B) / K;
         public double CountY(double x) => K*x + B;
-        public LineFunc GetPerp(Position goThrough) => new(-1.0/K, CountB(-1.0/K, goThrough.X, goThrough.Y));
+
+        public double GetKForPerp() => -1.0/K;
+        public LineFunc GetPerp(Position goThrough) {
+            return new(GetKForPerp(), CountB(GetKForPerp(), goThrough.X, goThrough.Y));
+        }
 
         public static double CountK(Position pos1, Position pos2) => (double)(pos2.Y-pos1.Y) / (pos2.X - pos1.X);
         public static double CountB(double k, double xThrought, double yThrough) => yThrough - k*xThrought;
