@@ -24,21 +24,53 @@ namespace PaintingsGenerator.Images {
         public void AddStroke(Stroke<RGBColor> stroke) {
             var strokePositions = stroke.Positions.Select((elem) => elem.Position).ToList();
             var approximation = LinearApproximator.GetApproximation(strokePositions);
-            var strokeAngle = Math.Atan(approximation.K);
+
+            var lenToWidth = stroke.Positions.Length / (2*stroke.Positions.AvgRadius);
+            var libStroke = StrokeLibManager.GetLibStroke(lenToWidth);
 
             var bounds = stroke.GetStrokeBounds();
-            var (width, height) = (bounds.RightX - bounds.LeftX, bounds.UpY - bounds.DownY);
-            var heightToWidth = (double)height / width;
+            double xLeft = bounds.LeftX, xRight = bounds.RightX, yLeft = bounds.DownY, yRight = bounds.UpY;
 
-            var libStroke = StrokeLibManager.GetLibStroke(heightToWidth);
+            if (Math.Abs(approximation.K) <= 1e-5) { // horizontal
+                yLeft += 2 * stroke.Positions.AvgRadius;
+                yRight += 2 * stroke.Positions.AvgRadius;
+            } else if (double.IsNormal(approximation.K)) {
+                double angleForBias = Math.Atan(approximation.GetKForPerp());
+
+                yLeft = approximation.CountY(bounds.LeftX);
+                yRight = approximation.CountY(bounds.RightX);
+
+                if (!bounds.YInBounds(yLeft)) {
+                    yLeft = approximation.K < 0 ? bounds.UpY : bounds.DownY;
+                    xLeft = approximation.CountX(yLeft);
+                }
+                if (!bounds.YInBounds(yRight)) {
+                    yRight = approximation.K < 0 ? bounds.UpY : bounds.DownY;
+                    xRight = approximation.CountX(yRight);
+                }
+
+                double yBias = Math.Abs(Math.Sin(angleForBias)) * stroke.Positions.AvgRadius;
+                double xBias = approximation.K < 0 ? Math.Cos(angleForBias) * stroke.Positions.AvgRadius : 0;
+
+                xLeft += xBias;
+                xRight += xBias;
+                yLeft += yBias;
+                yRight += yBias;
+            }
+
+            double length = Math.Sqrt(Math.Pow(bounds.RightX - bounds.LeftX, 2) + Math.Pow(bounds.DownY - bounds.UpY, 2));
+            double strokeAngle = -90 + Math.Atan(approximation.K)/Math.PI * 180;
+            if (double.IsNaN(strokeAngle)) strokeAngle = 0;
+
             var strokeInImg = new ImageDrawing() {
-                Rect = new(bounds.LeftX, bounds.DownY, width, height),
+                Rect = new(xLeft, yLeft, 2*stroke.Positions.AvgRadius, length),
                 ImageSource = libStroke,
             };
             lastStroke = new DrawingGroup() {
                 Children = { strokeInImg },
-                Transform = new RotateTransform(strokeAngle/Math.PI * 180),
+                Transform = new RotateTransform(strokeAngle, xLeft, yLeft),
             };
+
             lastStroke.Freeze();
         }
 
