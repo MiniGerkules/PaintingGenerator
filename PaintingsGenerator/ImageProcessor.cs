@@ -34,7 +34,7 @@ namespace PaintingsGenerator {
 
             while (true) {
                 var strokePos = await Task.Run(() => builder.GetStroke(settings, lastDiff));
-                if (strokePos.GetLen() < strokePos.MaxWidht()*settings.RatioOfLenToWidthShortest)
+                if (strokePos.Length < strokePos.MaxWidht()*settings.RatioOfLenToWidthShortest)
                     continue;
 
                 var rgbColor = await Task.Run(() => template.GetColor(strokePos));

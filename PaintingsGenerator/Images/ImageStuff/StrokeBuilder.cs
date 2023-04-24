@@ -43,7 +43,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
                 points.Add(newPoint);
 
-                if (points.GetLen() > (2*maxRadius + 1) * settings.RatioOfLenToWidthLargest) break;
+                if (points.Length > (2*maxRadius + 1) * settings.RatioOfLenToWidthLargest) break;
             }
 
             return points;
