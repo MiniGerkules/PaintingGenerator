@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Collections.Generic;
 
-using PaintingsGenerator.Colors;
 using PaintingsGenerator.MathStuff;
+using PaintingsGenerator.Images.ImageStuff.Colors;
 
 namespace PaintingsGenerator.Images.ImageStuff {
     internal class StrokeBuilder {
@@ -42,7 +42,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
                 points.Add(newPoint);
 
-                if (points.GetLen() > (2*maxRadius + 1) * settings.RatioOfLenToWidthLargest) break;
+                if (points.Length > (2*maxRadius + 1) * settings.RatioOfLenToWidthLargest) break;
             }
 
             return points;

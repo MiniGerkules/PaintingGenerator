@@ -5,7 +5,7 @@
         public int UpY { get; init; }
         public int DownY { get; init; }
 
-        public Bounds(int leftX, int rightX, int upY, int downY) {
+        public Bounds(int leftX, int rightX, int downY, int upY) {
             LeftX = leftX;
             RightX = rightX;
             UpY = upY;
@@ -13,7 +13,8 @@
         }
 
         public bool XInBounds(int x) => LeftX <= x && x <= RightX;
-        public bool YInBounds(int y) => UpY <= y && y <= DownY;
+        public bool YInBounds(int y) => DownY <= y && y <= UpY;
+        public bool YInBounds(double y) => DownY <= y && y <= UpY;
         public bool InBounds(Position pos) => XInBounds(pos.X) && YInBounds(pos.Y);
     }
 }

@@ -2,17 +2,28 @@
 
 namespace PaintingsGenerator {
     public class ImageProcessorVM : NotifierOfPropertyChange {
-        private BitmapSource painting;
-        public BitmapSource Painting {
-            get => painting;
+        private BitmapSource paintingWithoutLibStrokes;
+        public BitmapSource PaintingWithoutLibStrokes {
+            get => paintingWithoutLibStrokes;
             set {
-                painting = value;
-                NotifyPropertyChanged(nameof(Painting));
+                paintingWithoutLibStrokes = value;
+                NotifyPropertyChanged(nameof(PaintingWithoutLibStrokes));
             }
         }
 
-        public ImageProcessorVM(BitmapSource painting) {
-            this.painting = painting;
+        private BitmapSource paintingWithLibStrokes;
+        public BitmapSource PaintingWithLibStrokes {
+            get => paintingWithLibStrokes;
+            set {
+                paintingWithLibStrokes = value;
+                NotifyPropertyChanged(nameof(PaintingWithLibStrokes));
+            }
+        }
+
+        public ImageProcessorVM(BitmapSource paintingWithoutLibStrokes,
+                                BitmapSource paintingWithLibStrokes) {
+            this.paintingWithoutLibStrokes = paintingWithoutLibStrokes;
+            this.paintingWithLibStrokes = paintingWithLibStrokes;
         }
     }
 }

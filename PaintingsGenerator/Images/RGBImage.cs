@@ -3,8 +3,8 @@ using System.Windows.Media;
 using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 
-using PaintingsGenerator.Colors;
 using PaintingsGenerator.Images.ImageStuff;
+using PaintingsGenerator.Images.ImageStuff.Colors;
 
 namespace PaintingsGenerator.Images {
     internal class RGBImage : Image<RGBColor> {
@@ -18,15 +18,10 @@ namespace PaintingsGenerator.Images {
             }
         }
 
-        public static readonly PixelFormat FORMAT = PixelFormats.Rgb24;
-        public static readonly int BYTES_PER_PIXEL = (FORMAT.BitsPerPixel + 7) / 8;
-
-        private StrokeRestorer? toRestor = null;
-        private List<Position>? lastStrokePositions = null;
-        private List<RGBColor>? colorsToRecover = null;
+        private StrokeRestorer? toRestore = null;
 
         #region Constructors
-        private RGBImage(int width, int height) : base(new RGBColor[height, width]) {
+        private RGBImage(int width, int height) : base(PixelFormats.Rgb24, new RGBColor[height, width]) {
         }
 
         public RGBImage(BitmapSource imageToHandle)
@@ -46,36 +41,33 @@ namespace PaintingsGenerator.Images {
         }
         #endregion
 
-        public BitmapSource ToBitmap() {
+        public override BitmapSource ToBitmap() {
             int stride = Width * BYTES_PER_PIXEL;
             var pixels = new byte[Height * stride];
 
-            if (FORMAT == PixelFormats.Rgb24) {
-                for (int y = 0; y < Height; ++y) {
-                    for (int x = 0; x < Width; ++x) {
-                        var curPtr = 3*(y*Width + x);
+            for (int y = 0; y < Height; ++y) {
+                for (int x = 0; x < Width; ++x) {
+                    var curPtr = 3*(y*Width + x);
 
-                        pixels[curPtr + 0] = this[y, x].Red;
-                        pixels[curPtr + 1] = this[y, x].Green;
-                        pixels[curPtr + 2] = this[y, x].Blue;
-                    }
+                    pixels[curPtr + 0] = this[y, x].Red;
+                    pixels[curPtr + 1] = this[y, x].Green;
+                    pixels[curPtr + 2] = this[y, x].Blue;
                 }
-            } else {
-                throw new Exception("Unsupported pixel encoding format!");
             }
 
-            return BitmapSource.Create(
-                Width, Height, 96, 96,
-                FORMAT, null,
-                pixels, stride
+            var painting = BitmapSource.Create(
+                Width, Height, 96, 96, FORMAT, null, pixels, stride
             );
+            painting.Freeze();
+
+            return painting;
         }
 
         public override void AddStroke(Stroke<RGBColor> stroke) {
             if (stroke.Positions.Count == 0) return;
 
-            lastStrokePositions = new();
-            colorsToRecover = new(lastStrokePositions.Count);
+            var positionsToRecover = new List<Position>();
+            var colorsToRecover = new List<RGBColor>();
 
             var positions = new PositionManager();
             for (int i = 0; i < stroke.Positions.Count - 1; ++i) {
@@ -87,28 +79,24 @@ namespace PaintingsGenerator.Images {
             }
 
             foreach (var pos in positions.StoredPositions) {
-                lastStrokePositions.Add(pos);
+                positionsToRecover.Add(pos);
                 colorsToRecover.Add(this[pos.Y, pos.X]);
 
                 this[pos.Y, pos.X] = stroke.Color;
             }
+
+            toRestore = new(positionsToRecover, colorsToRecover);
         }
 
         public void RemoveLastStroke() {
-            if (lastStrokePositions == null) return;
+            if (toRestore == null) return;
 
-            for (int i = 0; i < lastStrokePositions.Count; ++i) {
-                var pos = lastStrokePositions[i];
-                this[pos.Y, pos.X] = colorsToRecover![i];
+            for (int i = 0; i < toRestore.Positions.Count; ++i) {
+                var pos = toRestore.Positions[i];
+                this[pos.Y, pos.X] = toRestore.OldColors[i];
             }
 
-            int curColor = 0;
-            foreach (var pos in lastStrokePositions) {
-                this[pos.Y, pos.X] = colorsToRecover![curColor++];
-            }
-
-            lastStrokePositions = null;
-            colorsToRecover!.Clear();
+            toRestore = null;
         }
 
         public RGBColor GetColor(StrokePivot point) {
@@ -151,6 +139,16 @@ namespace PaintingsGenerator.Images {
             return error;
         }
 
+        private BitmapSource ConverFormat(BitmapSource image) {
+            var converter = new FormatConvertedBitmap();
+            converter.BeginInit();
+            converter.Source = image;
+            converter.DestinationFormat = FORMAT;
+            converter.EndInit();
+
+            return converter;
+        }
+
         private static void UnpuckWithAdd(RGBColor color, ref ulong red,
                                           ref ulong green, ref ulong blue) {
             red += color.Red;
@@ -172,10 +170,7 @@ namespace PaintingsGenerator.Images {
 
         #region Getters
         private static RGBColor GetPixel(byte[] pixelBytes) {
-            if (FORMAT == PixelFormats.Rgb24)
-                return new(pixelBytes[0], pixelBytes[1], pixelBytes[2]);
-            else
-                throw new Exception("Unsupported pixel encoding format!");
+            return new(pixelBytes[0], pixelBytes[1], pixelBytes[2]);
         }
 
         public static DifferenceOfImages GetDifference(RGBImage a, RGBImage b) {
@@ -197,16 +192,6 @@ namespace PaintingsGenerator.Images {
             return diff;
         }
         #endregion
-
-        private static BitmapSource ConverFormat(BitmapSource image) {
-            var converter = new FormatConvertedBitmap();
-            converter.BeginInit();
-            converter.Source = image;
-            converter.DestinationFormat = FORMAT;
-            converter.EndInit();
-
-            return converter;
-        }
         #endregion
     }
 }
