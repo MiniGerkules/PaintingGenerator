@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 using System.Windows.Media.Imaging;
 
-namespace PaintingsGenerator.Images.ImageStuff {
+namespace PaintingsGenerator.StrokesLib {
     internal class StrokeLibManager {
         private static readonly string pathToLib = @"./StrokesLib/";
 
