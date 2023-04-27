@@ -3,9 +3,9 @@ using System.Linq;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-using PaintingsGenerator.Colors;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.Images.ImageStuff;
+using PaintingsGenerator.Images.ImageStuff.Colors;
 
 namespace PaintingsGenerator.Images {
     internal class ImageWithLibStrokes : IImage<RGBColor> {

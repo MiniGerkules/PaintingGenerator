@@ -3,8 +3,8 @@ using System.Windows.Media;
 using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 
-using PaintingsGenerator.Colors;
 using PaintingsGenerator.Images.ImageStuff;
+using PaintingsGenerator.Images.ImageStuff.Colors;
 
 namespace PaintingsGenerator.Images {
     internal class RGBImage : Image<RGBColor> {

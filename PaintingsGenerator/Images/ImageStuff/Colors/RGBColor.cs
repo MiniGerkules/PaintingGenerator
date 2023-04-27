@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PaintingsGenerator.Colors {
+namespace PaintingsGenerator.Images.ImageStuff.Colors {
     public record struct RGBColor {
         public byte Red { get; }
         public byte Green { get; }

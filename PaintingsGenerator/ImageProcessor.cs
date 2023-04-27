@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Images;
-using PaintingsGenerator.Colors;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.Images.ImageStuff;
+using PaintingsGenerator.Images.ImageStuff.Colors;
 
 namespace PaintingsGenerator {
     internal class ImageProcessor {

@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Collections.Generic;
 
-using PaintingsGenerator.Colors;
 using PaintingsGenerator.MathStuff;
+using PaintingsGenerator.Images.ImageStuff.Colors;
 
 namespace PaintingsGenerator.Images.ImageStuff {
     internal class StrokeBuilder {

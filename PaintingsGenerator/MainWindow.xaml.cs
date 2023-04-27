@@ -3,8 +3,7 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 
 using Microsoft.Win32;
-
-using PaintingsGenerator.Images.ImageStuff;
+using PaintingsGenerator.StrokesLib;
 
 namespace PaintingsGenerator {
     public partial class MainWindow : Window {
@@ -32,9 +31,9 @@ namespace PaintingsGenerator {
             };
 
             if (fileDialog.ShowDialog() == true) {
-                var template = new BitmapImage(new (fileDialog.FileName));
+                var template = new BitmapImage(new(fileDialog.FileName));
                 if (template.CanFreeze) template.Freeze();
-                
+
                 reference.Source = template;
                 imageProcessor.Process(template, new());
             } else {
