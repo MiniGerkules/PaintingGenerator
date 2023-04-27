@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Windows.Media;
 
-namespace PaintingsGenerator.Images.ImageStuff.Colors {
-    internal record class HSVAColor(double Hue,         // From 0 to 1
-                                    double Saturation,  // From 0 to 1
-                                    double Value,       // From 0 to 1
-                                    double Alpha) {     // From 0 to 1
+namespace PaintingsGenerator.StrokesLib.Colors {
+    internal record struct HSVAColor(double Hue, double Saturation, double Value,
+                                     double Alpha) : IStrokeColor {
         public static HSVAColor FromBgra32(byte blue, byte green, byte red, byte alpha) {
             double redFrom0To1 = (double)red / byte.MaxValue;
             double greenFrom0To1 = (double)green / byte.MaxValue;
@@ -26,13 +24,13 @@ namespace PaintingsGenerator.Images.ImageStuff.Colors {
             else /* max == blueFrom0To1 */
                 h = 60 * (redFrom0To1 - greenFrom0To1) / delta + 240;
 
-            double s = max == 0 ? 0 : 1 - min/max;
+            double s = max == 0 ? 0 : 1 - min / max;
             double v = max;
 
-            return new(h, s, v, aplpaFrom0To1);
+            return new(h / 360, s, v, aplpaFrom0To1);
         }
 
-        public Color ToRGB() {
+        public Color ToColor() {
             // https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB
             double hueInDegrees = Hue * 360;
             double C = Saturation * Value;
@@ -57,8 +55,9 @@ namespace PaintingsGenerator.Images.ImageStuff.Colors {
             byte red = (byte)((r1 + m) * 255);
             byte green = (byte)((g1 + m) * 255);
             byte blue = (byte)((b1 + m) * 255);
+            byte aplha = (byte)(Alpha * byte.MaxValue);
 
-            return Color.FromArgb((byte)(Alpha*byte.MaxValue), red, green, blue);
+            return Color.FromArgb(aplha, red, green, blue);
         }
     }
 }
