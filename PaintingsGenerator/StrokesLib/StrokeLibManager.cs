@@ -2,8 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
-
-using System.Windows.Media.Imaging;
+using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.StrokesLib {
     internal class StrokeLibManager {
@@ -34,7 +33,8 @@ namespace PaintingsGenerator.StrokesLib {
             Array.Sort(sortedKeys);
         }
 
-        public static BitmapImage GetLibStroke(double heightToWidth) {
+        public static RealStroke<ColorProducer> GetLibStroke<ColorProducer>(double heightToWidth)
+                    where ColorProducer : IColorProducer, new() {
             int keyIndex = sortedKeys.Length - 1;
             for (int i = 0; i < sortedKeys.Length; ++i) {
                 if (sortedKeys[i] - heightToWidth > 0) {
@@ -49,7 +49,7 @@ namespace PaintingsGenerator.StrokesLib {
                 keyIndex = diffLeft < diffRight ? keyIndex - 1 : keyIndex;
             }
 
-            return new(new Uri(strokesLib[sortedKeys[keyIndex]], UriKind.Relative));
+            return RealStroke<ColorProducer>.Create(new(strokesLib[sortedKeys[keyIndex]], UriKind.Relative));
         }
     }
 }

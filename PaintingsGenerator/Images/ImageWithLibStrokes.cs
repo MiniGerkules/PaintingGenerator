@@ -4,8 +4,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.MathStuff;
+using PaintingsGenerator.StrokesLib;
 using PaintingsGenerator.Images.ImageStuff;
 using PaintingsGenerator.Images.ImageStuff.Colors;
+using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.Images {
     internal class ImageWithLibStrokes : IImage<RGBColor> {
@@ -26,7 +28,8 @@ namespace PaintingsGenerator.Images {
             var approximation = LinearApproximator.GetApproximation(strokePositions);
 
             var lenToWidth = stroke.Positions.Length / (2*stroke.Positions.AvgRadius);
-            var libStroke = StrokeLibManager.GetLibStroke(lenToWidth);
+            var libStroke = StrokeLibManager.GetLibStroke<RGBAProducer>(lenToWidth);
+            libStroke.ChangeColor(stroke.Color);
 
             var bounds = stroke.GetStrokeBounds();
             double xLeft = bounds.LeftX, xRight = bounds.RightX, yLeft = bounds.DownY, yRight = bounds.UpY;
@@ -64,7 +67,7 @@ namespace PaintingsGenerator.Images {
 
             var strokeInImg = new ImageDrawing() {
                 Rect = new(xLeft, yLeft, 2*stroke.Positions.AvgRadius, length),
-                ImageSource = libStroke,
+                ImageSource = libStroke.ToBitmap(),
             };
             lastStroke = new DrawingGroup() {
                 Children = { strokeInImg },
