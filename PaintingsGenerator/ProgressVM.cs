@@ -17,6 +17,8 @@ namespace PaintingsGenerator {
         public uint CurProgress {
             get => curProgress;
             set {
+                if (curProgress == value) return;
+
                 curProgress = Math.Min(value, MaxProgress);
                 status = $"{curProgress}/{maxProgress}";
 
