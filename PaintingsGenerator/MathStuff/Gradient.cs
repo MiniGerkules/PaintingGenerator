@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -6,14 +7,6 @@ using PaintingsGenerator.Images;
 
 namespace PaintingsGenerator.MathStuff {
     internal class Gradient {
-        private record struct DoubleWrap : IToDoubleConvertable {
-            private double val;
-            public double Value {
-                get => val;
-                set => val = value;
-            }
-        }
-
         private static readonly double[,] kernel_x;
         private static readonly double[,] kernel_y;
         private static readonly double[,] gaussian = new double[,] {
@@ -70,18 +63,9 @@ namespace PaintingsGenerator.MathStuff {
         private readonly double[,] dx;
         private readonly double[,] dy;
 
-        private Gradient(Container<DoubleWrap> dx, Container<DoubleWrap> dy) {
-            this.dx = new double[dx.Height, dx.Width];
-            for (int y = 0; y <  dx.Height; ++y) {
-                for (int x = 0; x < dx.Width; ++x)
-                    this.dx[y, x] = dx[y, x].Value;
-            }
-
-            this.dy = new double[dy.Height, dy.Width];
-            for (int y = 0; y <  dy.Height; ++y) {
-                for (int x = 0; x < dy.Width; ++x)
-                    this.dy[y, x] = dy[y, x].Value;
-            }
+        private Gradient(double[,] dx, double[,] dy) {
+            this.dx = dx;
+            this.dy = dy;
         }
 
         public Vector2D GetPerpVector(Position position) {
@@ -126,8 +110,10 @@ namespace PaintingsGenerator.MathStuff {
 
         #region StaticMethods
         public static Gradient GetGradient(GrayImage grayImage) {
-            var dx = MakeConvolution(grayImage, kernel_x);
-            var dy = MakeConvolution(grayImage, kernel_y);
+            var imageInDouble = ImageToDoubleArr(grayImage);
+
+            var dx = MakeConvolution(imageInDouble, kernel_x);
+            var dy = MakeConvolution(imageInDouble, kernel_y);
 
             dx = MakeConvolution(dx, gaussian);
             dy = MakeConvolution(dy, gaussian);
@@ -135,32 +121,44 @@ namespace PaintingsGenerator.MathStuff {
             return new(dx, dy);
         }
 
-        private static Container<DoubleWrap> MakeConvolution<T>(Container<T> image, double[,] kernel)
-                where T : IToDoubleConvertable {
-            var kernel_height = kernel.GetLength(0);
-            var kernel_width = kernel.GetLength(1);
+        private static double[,] ImageToDoubleArr(GrayImage image) {
+            var imageInDouble = new double[image.Height, image.Width];
 
-            int kernel_center_y = kernel_height / 2;
-            int kernel_center_x = kernel_width / 2;
+            for (int y = 0; y < image.Height; ++y) {
+                for (int x = 0; x < image.Width; ++x)
+                    imageInDouble[y, x] = image[y, x].Value;
+            }
 
-            var res = new DoubleWrap[image.Height, image.Width];
-            for (int img_y = 0; img_y < image.Height; ++img_y) {
-                for (int img_x = 0; img_x < image.Width; ++img_x) {
-                    for (int kern_y = 0; kern_y < kernel_height; ++kern_y) {
-                        for (int kern_x = 0; kern_x < kernel_width; ++kern_x) {
-                            int y = img_y + (kern_y - kernel_center_y);
-                            int x = img_x + (kern_x - kernel_center_x);
+            return imageInDouble;
+        }
 
-                            if (y >= 0 && y < image.Height && x >= 0 && x < image.Width) {
-                                res[img_y, img_x].Value = res[img_y, img_x].Value +
-                                                          image[y, x].Value*kernel[kern_y, kern_x];
-                            }
+        private static double[,] MakeConvolution(double[,] image, double[,] kernel) {
+            int imageHeight = image.GetLength(0), imageWidth = image.GetLength(1);  
+            int kernelHeight = kernel.GetLength(0), kernelWeight = kernel.GetLength(1);
+
+            int kernelCenterY = kernelHeight / 2;
+            int kernelCenterX = kernelWeight / 2;
+
+            var res = new double[imageHeight, imageWidth];
+            for (int imgY = 0; imgY < imageHeight; ++imgY) {
+                for (int imgX = 0; imgX < imageWidth; ++imgX) {
+                    double sum = 0;
+
+                    for (int kernY = 0; kernY < kernelHeight; ++kernY) {
+                        for (int kernX = 0; kernX < kernelWeight; ++kernX) {
+                            int y = imgY + (kernY - kernelCenterY);
+                            int x = imgX + (kernX - kernelCenterX);
+
+                            if (y >= 0 && y < imageHeight && x >= 0 && x < imageWidth)
+                                sum += image[y, x]*kernel[kernY, kernX];
                         }
                     }
+
+                    res[imgY, imgX] = sum;
                 }
             }
 
-            return new(res);
+            return res;
         }
         #endregion
     }
