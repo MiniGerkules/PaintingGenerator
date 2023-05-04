@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 
 namespace PaintingsGenerator.MathStuff {
-    internal class LinearApproximator {
-        public static LineFunc GetApproximation(List<Position> positions) {
+    internal class Approximator {
+        public static LineFunc GetApproximation(ImmutableList<Position> positions) {
             long xSum = 0, ySum = 0, x2Sum = 0, xySum = 0;
 
             foreach (var position in positions) {
