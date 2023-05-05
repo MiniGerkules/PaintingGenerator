@@ -1,26 +1,44 @@
 ﻿using System;
 using System.Linq;
-using System.Windows.Media;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.Images;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.Images.ImageStuff;
-using PaintingsGenerator.Images.ImageStuff.Colors;
 
 namespace PaintingsGenerator {
     internal class ImageProcessor {
-        public readonly ImageProcessorVM imageProcessorVM;
-        public readonly ProgressVM progressVM;
+        private readonly List<ProcessAction> actions;
+        private readonly List<bool> eventsFlags;
+
+        public readonly ImageProcessorVM imageProcessorVM = new();
+        public readonly StrokeProcessorVM strokeProcessorVM = new();
+        public readonly ProgressVM progressVM = new();
+        public readonly ActionsVM actionsVM;
 
         public ImageProcessor() {
-            var emptyBitmap = CreateEmptyBitmap(PixelFormats.Gray8);
-            imageProcessorVM = new(emptyBitmap, emptyBitmap);
-            progressVM = new();
+            eventsFlags = new List<bool>() {
+                false, // Terminate
+                false, // Run
+                false, // Step
+            };
+            actions = new() {
+                new("Run", () => eventsFlags[(int)Event.Run] = true),
+                new("Step", () => eventsFlags[(int)Event.Step] = true),
+            };
+
+            actionsVM = new(actions.ToImmutableList());
         }
 
         public async void Process(BitmapSource toProcess, Settings settings) {
+            imageProcessorVM.Template = toProcess;
+            for (int i = 0; i < eventsFlags.Count; ++i) eventsFlags[i] = false;
+            eventsFlags[(int)Event.Run] = true;
+
             var template = new RGBImage(toProcess);
             var gradient = await Task.Run(() => Gradient.GetGradient(new(template)));
             var builder = new StrokeBuilder(template, gradient);
@@ -38,7 +56,7 @@ namespace PaintingsGenerator {
                     continue;
 
                 var rgbColor = await Task.Run(() => template.GetColor(strokePos));
-                var newStroke = new Stroke<RGBColor>(strokePos, rgbColor);
+                var newStroke = new Stroke(strokePos, rgbColor);
                 await Task.Run(() => painting.AddStroke(newStroke));
 
                 var newDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
@@ -48,10 +66,27 @@ namespace PaintingsGenerator {
                     lastDiff = newDiff;
                     await Task.Run(() => libStrokesImg.AddStroke(newStroke));
                     libStrokesImg.SaveStroke();
+
+                    strokeProcessorVM.GeneratedStroke = newStroke.ToBitmap();
+                    strokeProcessorVM.LibStroke = libStrokesImg.LastStroke;
                     await UpdateView(painting, libStrokesImg, maxDiff, lastDiff.ScaledDiff, diffToStop);
                 }
 
+                await WaitForEvent();
+                if (eventsFlags[(int)Event.Terminate]) {
+                    return;
+                } else if (eventsFlags[(int)Event.Step]) {
+                    eventsFlags[(int)Event.Step] = false;
+                    eventsFlags[(int)Event.Run] = false;
+                }
+
                 if (lastDiff.ScaledDiff <= diffToStop) break;
+            }
+        }
+
+        private async Task WaitForEvent() {
+            while (!eventsFlags.Any(elem => elem)) {
+                await Task.Run(() => Thread.Sleep(100));
             }
         }
 
