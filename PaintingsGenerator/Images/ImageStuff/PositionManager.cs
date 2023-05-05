@@ -10,21 +10,19 @@ namespace PaintingsGenerator.Images.ImageStuff {
         private readonly HashSet<Position> positions = new();
         public ImmutableHashSet<Position> StoredPositions => positions.ToImmutableHashSet();
 
-        private Bounds bounds = new(0, 0, 0, 0);
         private LineFunc upperBoundFunc = new(0, 0);
         private LineFunc lowerBoundFunc = new(0, 0);
 
-        public void StoreStrokePositions(Bounds bounds, StrokePositions positions) {
-            for (int i = 0; i < positions.Count - 1; ++i) {
-                var curPos = positions[i];
-                var nextPos = positions[i + 1];
+        public void StoreStrokePositions(StrokePositions pivotPositions) {
+            for (int i = 0; i < pivotPositions.Count - 1; ++i) {
+                var curPos = pivotPositions[i];
+                var nextPos = pivotPositions[i + 1];
 
-                StoreStrokePositions(bounds, curPos, nextPos);
+                StoreStrokePositions(curPos, nextPos);
             }
         }
 
-        private void StoreStrokePositions(Bounds bounds, StrokePivot start, StrokePivot end) {
-            this.bounds = bounds;
+        private void StoreStrokePositions(StrokePivot start, StrokePivot end) {
             if (start.Position.X > end.Position.X) (start, end) = (end, start);
 
             InitBoundFuncs(start, end);
@@ -130,10 +128,8 @@ namespace PaintingsGenerator.Images.ImageStuff {
                     int nonVertX = (int)xCounter(y);
                     int minX = Math.Min(verticalX, nonVertX), maxX = Math.Max(verticalX, nonVertX);
 
-                    for (int x = minX; x <= maxX; ++x) {
-                        var pos = new Position(x, y);
-                        if (bounds.InBounds(pos)) positions.Add(pos);
-                    }
+                    for (int x = minX; x <= maxX; ++x)
+                        positions.Add(new Position(x, y));
                 }
             }
         }
@@ -150,10 +146,8 @@ namespace PaintingsGenerator.Images.ImageStuff {
                     int yMin = (int)lowerBoundFunc.CountY(x);
                     int yMax = (int)upperBoundFunc.CountY(x);
 
-                    for (int y = yMin; y <= yMax; ++y) {
-                        var pos = new Position(x, y);
-                        if (bounds.InBounds(pos)) positions.Add(pos);
-                    }
+                    for (int y = yMin; y <= yMax; ++y)
+                        positions.Add(new Position(x, y));
                 }
             }
         }
@@ -165,10 +159,10 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
             for (int i = 1; i <= radius; ++i) {
                 var posPositive = new Position(pos.X + additionX(i), pos.Y + additionY(i));
-                var posNegative = new Position(pos.X - additionX(i), pos.Y - additionY(i));
+                positions.Add(posPositive);
 
-                if (bounds.InBounds(posPositive)) positions.Add(posPositive);
-                if (bounds.InBounds(posNegative)) positions.Add(posNegative);
+                var posNegative = new Position(pos.X - additionX(i), pos.Y - additionY(i));
+                positions.Add(posNegative);
             }
         }
 
@@ -247,10 +241,8 @@ namespace PaintingsGenerator.Images.ImageStuff {
                     int lowerY = (int)Math.Round(countLowerBoundY(x));
                     int upperY = (int)Math.Round(countUpperBoundY(x));
 
-                    if (leftX <= x && x <= rightX && lowerY <= y && y <= upperY) {
-                        var pos = new Position(x, y);
-                        if (bounds.InBounds(pos)) positions.Add(pos);
-                    }
+                    if (leftX <= x && x <= rightX && lowerY <= y && y <= upperY)
+                        positions.Add(new Position(x, y));
                 }
             }
         }
@@ -258,11 +250,9 @@ namespace PaintingsGenerator.Images.ImageStuff {
         private void StoreRoundPart(StrokePivot pivot) {
             for (int x = (int)-pivot.Radius; x <= pivot.Radius; ++x) {
                 var curX = pivot.Position.X + x;
-                if (!bounds.XInBounds(curX)) continue;
 
                 for (int y = (int)-pivot.Radius; y <= pivot.Radius; ++y) {
                     var curY = pivot.Position.Y + y;
-                    if (!bounds.YInBounds(curY)) continue;
 
                     if (x*x + y*y <= pivot.Radius*pivot.Radius)
                         positions.Add(new Position(curX, curY));
