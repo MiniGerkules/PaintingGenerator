@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Immutable;
+
+using PaintingsGenerator.MathStuff;
 
 namespace PaintingsGenerator.Images.ImageStuff {
     public class Stroke<ColorType> {
@@ -22,6 +26,15 @@ namespace PaintingsGenerator.Images.ImageStuff {
             }
 
             return new(leftBound, rightBound, downBound, upBound);
+        }
+
+        public StrokeParameters GetParameters() {
+            var positions = Positions.Select(elem => elem.Position).ToImmutableList();
+
+            return new(
+                (double)Positions.Length / (2*Positions.AvgRadius),
+                Approximator.GetQuadraticApproximation(positions).Curvative
+            );
         }
     }
 }
