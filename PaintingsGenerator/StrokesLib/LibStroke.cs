@@ -1,21 +1,27 @@
 ﻿using System;
 using System.Windows.Media;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Windows.Media.Imaging;
 
+using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.StrokesLib.Colors;
 using PaintingsGenerator.Images.ImageStuff.Colors;
 using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.StrokesLib {
-    internal class RealStroke<ColorProducer> where ColorProducer : IColorProducer, new() {
+    internal class LibStroke<ColorProducer> where ColorProducer : IColorProducer, new() {
         private static readonly ColorProducer colorProducer = new();
         private readonly IStrokeColor[,] pixels;
 
-        private RealStroke(IStrokeColor[,] pixels) {
+        public int Width => pixels.GetLength(1);
+        public int Height => pixels.GetLength(0);
+
+        private LibStroke(IStrokeColor[,] pixels) {
             this.pixels = pixels;
         }
 
-        public static RealStroke<ColorProducer> Create(Uri pathToStroke) {
+        public static LibStroke<ColorProducer> Create(Uri pathToStroke) {
             var image = new BitmapImage(pathToStroke);
             if (image.Format != PixelFormats.Bgra32)
                 throw new FormatException("ERROR! Image must be in Bgra32 format!");
@@ -30,10 +36,8 @@ namespace PaintingsGenerator.StrokesLib {
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
                     int blockStart = y * bytesPerPixel * width + x * bytesPerPixel;
-                    byte blue = vals[blockStart + 0];
-                    byte green = vals[blockStart + 1];
-                    byte red = vals[blockStart + 2];
-                    byte alpha = vals[blockStart + 3];
+                    byte blue = vals[blockStart + 0], green = vals[blockStart + 1];
+                    byte red = vals[blockStart + 2], alpha = vals[blockStart + 3];
 
                     pixels[y, x] = colorProducer.FromBgra32(blue, green, red, alpha);
                 }
@@ -74,6 +78,20 @@ namespace PaintingsGenerator.StrokesLib {
             bitmap.Freeze();
 
             return bitmap;
+        }
+
+        public double CountCurvatureByLine(Color lineColor) {
+            var positions = new List<Position>();
+            for (int y = 0, endY = pixels.GetLength(0); y < endY; ++y) {
+                for (int x = 0, endX = pixels.GetLength(1); x < endX; ++x) {
+                    //if (!pixels[y, x].IsTransparent)
+                    //    positions.Add(new(x, y));
+                    if (pixels[y, x].IsEqual(lineColor))
+                        positions.Add(new(x, y));
+                }
+            }
+
+            return Approximator.GetQuadraticApproximation(positions.ToImmutableList()).Curvative;
         }
     }
 }
