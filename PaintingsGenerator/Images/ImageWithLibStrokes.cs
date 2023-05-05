@@ -7,11 +7,10 @@ using System.Collections.Immutable;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.StrokesLib;
 using PaintingsGenerator.Images.ImageStuff;
-using PaintingsGenerator.Images.ImageStuff.Colors;
 using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.Images {
-    internal class ImageWithLibStrokes : IImage<RGBColor> {
+    internal class ImageWithLibStrokes : IImage {
         private readonly int width;
         private readonly int height;
 
@@ -24,8 +23,8 @@ namespace PaintingsGenerator.Images {
             this.height = height;
         }
 
-        public void AddStroke(Stroke<RGBColor> stroke) {
-            var strokePositions = stroke.Positions.Select((elem) => elem.Position).ToImmutableList();
+        public void AddStroke(Stroke stroke) {
+            var strokePositions = stroke.PivotPositions.Select((elem) => elem.Position).ToImmutableList();
             var approximation = Approximator.GetLinearApproximation(strokePositions);
 
             var libStroke = StrokeLibManager.GetLibStroke<RGBAProducer>(stroke.GetParameters());

@@ -4,7 +4,7 @@ using System.Windows.Media.Imaging;
 using PaintingsGenerator.Images.ImageStuff;
 
 namespace PaintingsGenerator.Images {
-    public abstract class Image<PixelColor> : Container<PixelColor>, IImage<PixelColor> {
+    public abstract class Image<PixelColor> : Container<PixelColor>, IImage {
         protected readonly PixelFormat FORMAT;
         protected readonly int BYTES_PER_PIXEL;
 
@@ -13,7 +13,7 @@ namespace PaintingsGenerator.Images {
             BYTES_PER_PIXEL = (format.BitsPerPixel + 7) / 8;
         }
 
-        public abstract void AddStroke(Stroke<PixelColor> stroke);
+        public abstract void AddStroke(Stroke stroke);
         public abstract BitmapSource ToBitmap();
     }
 }
