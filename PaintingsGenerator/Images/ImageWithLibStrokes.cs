@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Collections.Immutable;
 
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.StrokesLib;
@@ -24,11 +25,10 @@ namespace PaintingsGenerator.Images {
         }
 
         public void AddStroke(Stroke<RGBColor> stroke) {
-            var strokePositions = stroke.Positions.Select((elem) => elem.Position).ToList();
-            var approximation = LinearApproximator.GetApproximation(strokePositions);
+            var strokePositions = stroke.Positions.Select((elem) => elem.Position).ToImmutableList();
+            var approximation = Approximator.GetLinearApproximation(strokePositions);
 
-            var lenToWidth = stroke.Positions.Length / (2*stroke.Positions.AvgRadius);
-            var libStroke = StrokeLibManager.GetLibStroke<RGBAProducer>(lenToWidth);
+            var libStroke = StrokeLibManager.GetLibStroke<RGBAProducer>(stroke.GetParameters());
             libStroke.ChangeColor(stroke.Color);
 
             var bounds = stroke.GetStrokeBounds();

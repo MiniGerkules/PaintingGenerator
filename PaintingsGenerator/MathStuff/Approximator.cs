@@ -2,7 +2,7 @@
 
 namespace PaintingsGenerator.MathStuff {
     internal class Approximator {
-        public static LineFunc GetApproximation(ImmutableList<Position> positions) {
+        public static LineFunc GetLinearApproximation(ImmutableList<Position> positions) {
             long xSum = 0, ySum = 0, x2Sum = 0, xySum = 0;
 
             foreach (var position in positions) {
