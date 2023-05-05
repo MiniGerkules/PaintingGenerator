@@ -7,11 +7,10 @@ using System.Collections.Immutable;
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.StrokesLib;
 using PaintingsGenerator.Images.ImageStuff;
-using PaintingsGenerator.Images.ImageStuff.Colors;
 using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.Images {
-    internal class ImageWithLibStrokes : IImage<RGBColor> {
+    internal class ImageWithLibStrokes : IImage {
         private readonly int width;
         private readonly int height;
 
@@ -19,13 +18,37 @@ namespace PaintingsGenerator.Images {
         private DrawingGroup freezedPainting = new();
         private DrawingGroup lastStroke = new();
 
+        public BitmapSource LastStroke => PackLastStrokeBitmap();
+
+        private BitmapSource PackLastStrokeBitmap() {
+            var group = new DrawingGroup() {
+                Children = { lastStroke },
+                Transform = new TranslateTransform(-lastStroke.Bounds.X, -lastStroke.Bounds.Y),
+            };
+            group.Freeze();
+
+            var drawingVisual = new DrawingVisual();
+            using (var drawingContext = drawingVisual.RenderOpen()) {
+                drawingContext.DrawDrawing(group);
+            }
+
+            var width = (int)lastStroke.Bounds.Width + 1;
+            var height = (int)lastStroke.Bounds.Height + 1;
+
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(drawingVisual);
+            bitmap.Freeze();
+
+            return bitmap;
+        }
+
         public ImageWithLibStrokes(int width, int height) {
             this.width = width;
             this.height = height;
         }
 
-        public void AddStroke(Stroke<RGBColor> stroke) {
-            var strokePositions = stroke.Positions.Select((elem) => elem.Position).ToImmutableList();
+        public void AddStroke(Stroke stroke) {
+            var strokePositions = stroke.PivotPositions.Select((elem) => elem.Position).ToImmutableList();
             var approximation = Approximator.GetLinearApproximation(strokePositions);
 
             var libStroke = StrokeLibManager.GetLibStroke<RGBAProducer>(stroke.GetParameters());
@@ -35,8 +58,8 @@ namespace PaintingsGenerator.Images {
             double xLeft = bounds.LeftX, xRight = bounds.RightX, yLeft = bounds.DownY, yRight = bounds.UpY;
 
             if (Math.Abs(approximation.K) <= 1e-5) { // horizontal
-                yLeft += 2 * stroke.Positions.AvgRadius;
-                yRight += 2 * stroke.Positions.AvgRadius;
+                yLeft += 2 * stroke.PivotPositions.AvgRadius;
+                yRight += 2 * stroke.PivotPositions.AvgRadius;
             } else if (double.IsNormal(approximation.K)) {
                 double angleForBias = Math.Atan(approximation.GetKForPerp());
 
@@ -52,8 +75,8 @@ namespace PaintingsGenerator.Images {
                     xRight = approximation.CountX(yRight);
                 }
 
-                double yBias = Math.Abs(Math.Sin(angleForBias)) * stroke.Positions.AvgRadius;
-                double xBias = approximation.K < 0 ? Math.Cos(angleForBias) * stroke.Positions.AvgRadius : 0;
+                double yBias = Math.Abs(Math.Sin(angleForBias)) * stroke.PivotPositions.AvgRadius;
+                double xBias = approximation.K < 0 ? Math.Cos(angleForBias) * stroke.PivotPositions.AvgRadius : 0;
 
                 xLeft += xBias;
                 xRight += xBias;
@@ -66,7 +89,7 @@ namespace PaintingsGenerator.Images {
             if (double.IsNaN(strokeAngle)) strokeAngle = 0;
 
             var strokeInImg = new ImageDrawing() {
-                Rect = new(xLeft, yLeft, 2*stroke.Positions.AvgRadius, length),
+                Rect = new(xLeft, yLeft, 2*stroke.PivotPositions.AvgRadius, length),
                 ImageSource = libStroke.ToBitmap(),
             };
             lastStroke = new DrawingGroup() {

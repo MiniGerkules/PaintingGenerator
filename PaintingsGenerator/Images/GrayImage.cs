@@ -14,9 +14,9 @@ namespace PaintingsGenerator.Images {
             }
         }
 
-        public override void AddStroke(Stroke<GrayColor> stroke) {
-            foreach (var pos in stroke.Positions)
-                this[pos.Position.Y, pos.Position.X] = new(stroke.Color.Gray);
+        public override void AddStroke(Stroke stroke) {
+            foreach (var pos in stroke.PivotPositions)
+                this[pos.Position.Y, pos.Position.X] = new(stroke.Color);
         }
 
         public override BitmapSource ToBitmap() {

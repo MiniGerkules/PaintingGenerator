@@ -1,18 +1,31 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Controls;
+using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 
 using Microsoft.Win32;
+using PaintingsGenerator.Pages;
 using PaintingsGenerator.StrokesLib;
 
 namespace PaintingsGenerator {
     public partial class MainWindow : Window {
         private readonly ImageProcessor imageProcessor = new();
+        private readonly Dictionary<MenuItem, IPage> pages;
 
         public MainWindow() {
             InitializeComponent();
 
-            imageDisplayer.DataContext = imageProcessor.imageProcessorVM;
+            pages = new() {
+                { imgGenButton, new PictureGeneratingPage(imageProcessor.imageProcessorVM) },
+                { strokeGenButton, new ObservationOfStrokesPage(imageProcessor.strokeProcessorVM, imageProcessor.actionsVM) },
+            };
+
+            foreach (var (_, page) in pages) {
+                page.SetInactive();
+                pagePlaceholder.Children.Add(page as UserControl);
+            }
+
             statusBar.DataContext = imageProcessor.progressVM;
         }
 
@@ -34,12 +47,27 @@ namespace PaintingsGenerator {
                 var template = new BitmapImage(new(fileDialog.FileName));
                 if (template.CanFreeze) template.Freeze();
 
-                reference.Source = template;
+                ChangePage(imgGenButton);
                 imageProcessor.Process(template, new());
             } else {
                 MessageBox.Show("You don't choose a file!", "ERROR!",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void ChangePage(object sender, RoutedEventArgs e) {
+            var menuItem = (MenuItem)sender;
+            ChangePage(menuItem);
+        }
+
+        private void ChangePage(MenuItem menuItem) {
+            SetAllPagesInactive();
+            pages[menuItem].SetActive();
+        }
+
+        private void SetAllPagesInactive() {
+            foreach (var (_, page) in pages)
+                page.SetInactive();
         }
     }
 }

@@ -6,7 +6,6 @@ using System.Windows.Media.Imaging;
 
 using PaintingsGenerator.MathStuff;
 using PaintingsGenerator.StrokesLib.Colors;
-using PaintingsGenerator.Images.ImageStuff.Colors;
 using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.StrokesLib {
@@ -46,8 +45,8 @@ namespace PaintingsGenerator.StrokesLib {
             return new(pixels);
         }
 
-        public void ChangeColor(RGBColor color) {
-            var hsvaColor = colorProducer.FromBgra32(color.Blue, color.Green, color.Red, 0);
+        public void ChangeColor(IStrokeColor color) {
+            var hsvaColor = colorProducer.FromColor(color.ToColor());
 
             for (int y = 0, endY = pixels.GetLength(0); y < endY; ++y) {
                 for (int x = 0, endX = pixels.GetLength(1); x < endX; ++x)
