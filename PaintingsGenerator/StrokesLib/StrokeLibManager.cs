@@ -1,55 +1,76 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
+
+using PaintingsGenerator.Images.ImageStuff;
 using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.StrokesLib {
-    internal class StrokeLibManager {
+    internal static class StrokeLibManager {
         private static readonly string pathToLib = @"./StrokesLib/";
+        private static readonly string pathToDatabase = @"./StrokesLib/library.strokes";
 
-        private static readonly Dictionary<double, string> strokesLib = new();
-        private static double[] sortedKeys = Array.Empty<double>();
+        private static Dictionary<StrokeParameters, string> strokesLib = new();
+        private static readonly PropertyInfo[] strokeParametersProps = typeof(StrokeParameters).GetProperties();
 
         public static void LoadStrokesLib() {
-            strokesLib.Clear();
+            if (File.Exists(pathToDatabase)) {
+                LoadDatabaseFromFile(pathToDatabase);
+            } else {
+                CreateDatabaseFromSources(pathToLib);
+            }
+        }
+
+        public static LibStroke<ColorProducer> GetLibStroke<ColorProducer>(StrokeParameters toDraw)
+                    where ColorProducer : IColorProducer, new() {
+            var allStrokeParams = strokesLib.Keys;
+            var best = allStrokeParams.First();
+            var bestDiff = GetDiff(best, toDraw);
+
+            foreach (var strokeParams in allStrokeParams.Skip(1)) {
+                double diff = GetDiff(strokeParams, toDraw);
+
+                if (diff*diff < bestDiff*bestDiff) {
+                    best = strokeParams;
+                    bestDiff = diff;
+                }
+            }
+
+            return LibStroke<ColorProducer>.Create(new(strokesLib[best], UriKind.Relative));
+        }
+
+        private static void LoadDatabaseFromFile(string pathToDatabase) {
+            throw new NotImplementedException();
+        }
+
+        private static void CreateDatabaseFromSources(string pathToLib) {
+            strokesLib = new();
             if (!Directory.Exists(pathToLib)) throw new FileLoadException("Can't load library of strokes!");
 
             foreach (var file in Directory.EnumerateFiles(pathToLib)) {
                 if (!file.EndsWith(".png")) continue;
 
-                var trimmed = file[pathToLib.Length..^4];
-                var sepIndex = trimmed.IndexOf('x');
-                if (sepIndex == -1) continue;
-
-                var width = int.Parse(trimmed[..sepIndex]);
-                var height = int.Parse(trimmed[(sepIndex + 1)..]);
-
-                strokesLib.Add((double)height / width, file);
+                var parameters = LibStrokeParamsManager.GetParameters(new(file, UriKind.Relative));
+                strokesLib.Add(parameters, file);
             }
 
             if (strokesLib.Count == 0) throw new FileLoadException("There aren't any strokes files!");
-            sortedKeys = strokesLib.Keys.ToArray();
-            Array.Sort(sortedKeys);
         }
 
-        public static RealStroke<ColorProducer> GetLibStroke<ColorProducer>(double heightToWidth)
-                    where ColorProducer : IColorProducer, new() {
-            int keyIndex = sortedKeys.Length - 1;
-            for (int i = 0; i < sortedKeys.Length; ++i) {
-                if (sortedKeys[i] - heightToWidth > 0) {
-                    keyIndex = i;
-                    break;
-                }
+        private static double GetDiff(StrokeParameters params1, StrokeParameters params2) {
+            double diff = 0;
+
+            foreach (var prop in strokeParametersProps) {
+                var val1 = prop.GetValue(params1);
+                var val2 = prop.GetValue(params2);
+                if (val1 == null || val2 == null) continue;
+
+                diff += (double)val1 - (double)val2;
             }
 
-            if (keyIndex > 0) {
-                var diffLeft = Math.Abs(sortedKeys[keyIndex - 1] - heightToWidth);
-                var diffRight = Math.Abs(sortedKeys[keyIndex] - heightToWidth);
-                keyIndex = diffLeft < diffRight ? keyIndex - 1 : keyIndex;
-            }
-
-            return RealStroke<ColorProducer>.Create(new(strokesLib[sortedKeys[keyIndex]], UriKind.Relative));
+            return diff;
         }
     }
 }

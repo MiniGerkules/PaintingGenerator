@@ -1,29 +1,32 @@
 ﻿using System.Windows.Media.Imaging;
 
 namespace PaintingsGenerator {
-    public class ImageProcessorVM : NotifierOfPropertyChange {
-        private BitmapSource paintingWithoutLibStrokes;
-        public BitmapSource PaintingWithoutLibStrokes {
+    public class ImageProcessorVM : NotifierWithImageProp {
+        private BitmapSource? paintingWithoutLibStrokes;
+        public BitmapSource? PaintingWithoutLibStrokes {
             get => paintingWithoutLibStrokes;
             set {
                 paintingWithoutLibStrokes = value;
-                NotifyPropertyChanged(nameof(PaintingWithoutLibStrokes));
+                NotifyPropertyChangedIfNeed(nameof(PaintingWithoutLibStrokes), value);
             }
         }
 
-        private BitmapSource paintingWithLibStrokes;
-        public BitmapSource PaintingWithLibStrokes {
+        private BitmapSource? paintingWithLibStrokes;
+        public BitmapSource? PaintingWithLibStrokes {
             get => paintingWithLibStrokes;
             set {
                 paintingWithLibStrokes = value;
-                NotifyPropertyChanged(nameof(PaintingWithLibStrokes));
+                NotifyPropertyChangedIfNeed(nameof(PaintingWithLibStrokes), value);
             }
         }
 
-        public ImageProcessorVM(BitmapSource paintingWithoutLibStrokes,
-                                BitmapSource paintingWithLibStrokes) {
-            this.paintingWithoutLibStrokes = paintingWithoutLibStrokes;
-            this.paintingWithLibStrokes = paintingWithLibStrokes;
+        private BitmapSource? template;
+        public BitmapSource? Template {
+            get => template;
+            set {
+                template = value;
+                NotifyPropertyChangedIfNeed(nameof(Template), value);
+            }
         }
     }
 }

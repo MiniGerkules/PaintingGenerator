@@ -63,26 +63,20 @@ namespace PaintingsGenerator.Images {
             return painting;
         }
 
-        public override void AddStroke(Stroke<RGBColor> stroke) {
-            if (stroke.Positions.Count == 0) return;
+        public override void AddStroke(Stroke stroke) {
+            if (stroke.PivotPositions.Count == 0) return;
 
             var positionsToRecover = new List<Position>();
             var colorsToRecover = new List<RGBColor>();
 
-            var positions = new PositionManager();
-            for (int i = 0; i < stroke.Positions.Count - 1; ++i) {
-                var curPos = stroke.Positions[i];
-                var nextPos = stroke.Positions[i + 1];
-                var bounds = GetBounds(curPos.Position, curPos.Radius, nextPos.Position, nextPos.Radius);
+            var bounds = GetBounds();
+            foreach (var pos in stroke.AllPositions) {
+                if (!bounds.InBounds(pos)) continue;
 
-                positions.StoreStrokePositions(bounds, curPos, nextPos);
-            }
-
-            foreach (var pos in positions.StoredPositions) {
                 positionsToRecover.Add(pos);
                 colorsToRecover.Add(this[pos.Y, pos.X]);
 
-                this[pos.Y, pos.X] = stroke.Color;
+                this[pos.Y, pos.X] = new(stroke.Color.ToColor());
             }
 
             toRestore = new(positionsToRecover, colorsToRecover);

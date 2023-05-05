@@ -24,19 +24,11 @@
 
         <Menu Grid.Row="0" IsMainMenu="True">
             <MenuItem Header="Choose file" Click="ChooseFileClick"/>
+            <MenuItem x:Name="imgGenButton" Header="Viewing image generation" Click="ChangePage"/>
+            <MenuItem x:Name="strokeGenButton" Header="Viewing stroke generation" Click="ChangePage"/>
         </Menu>
 
-        <Grid x:Name="imageDisplayer" Grid.Row="1" d:DataContext="{d:DesignInstance Type=local:ImageProcessorVM}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-            
-            <Image x:Name="reference" Grid.Column="0" Margin="5 5 2.5 5"/>
-            <Image Grid.Column="1" Margin="2.5 5 5 5" Source="{Binding PaintingWithoutLibStrokes, Mode=OneWay, IsAsync=True}"/>
-            <Image Grid.Column="2" Margin="2.5 5 5 5" Source="{Binding PaintingWithLibStrokes, Mode=OneWay, IsAsync=True}"/>
-        </Grid>
+        <Grid x:Name="pagePlaceholder" Grid.Row="1"/>
 
         <StatusBar x:Name="statusBar" Grid.Row="2" d:DataContext="{d:DesignInstance Type=local:ProgressVM}">
             <StatusBar.ItemsPanel>
