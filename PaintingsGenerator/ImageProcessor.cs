@@ -115,20 +115,5 @@ namespace PaintingsGenerator {
 
             return Math.Min((uint)realPercent, 100);
         }
-
-        private static BitmapSource CreateEmptyBitmap(PixelFormat format,
-                                                      int width = 1, int height = 1,
-                                                      double dpiX = 96, double dpiY = 96,
-                                                      BitmapPalette? palette = null) {
-            int stride = width * (format.BitsPerPixel+7) / 8;
-            byte[] pixels = Enumerable.Repeat(byte.MaxValue, height*stride).ToArray();
-
-            var bitmap = BitmapSource.Create(
-                width, height, dpiX, dpiY, format, palette, pixels, stride
-            );
-            bitmap.Freeze();
-
-            return bitmap;
-        }
     }
 }
