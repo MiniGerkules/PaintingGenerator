@@ -4,6 +4,8 @@ using System.Windows.Media;
 namespace PaintingsGenerator.StrokesLib.Colors {
     internal record struct HSVAColor(double Hue, double Saturation, double Value,
                                      double Alpha) : IStrokeColor {
+        public bool IsTransparent => Alpha == 0;
+
         public static HSVAColor FromBgra32(byte blue, byte green, byte red, byte alpha) {
             double redFrom0To1 = (double)red / byte.MaxValue;
             double greenFrom0To1 = (double)green / byte.MaxValue;
@@ -29,6 +31,8 @@ namespace PaintingsGenerator.StrokesLib.Colors {
 
             return new(h / 360, s, v, aplpaFrom0To1);
         }
+
+        public bool IsEqual(Color color) => ToColor() == color;
 
         public Color ToColor() {
             // https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB
