@@ -69,14 +69,9 @@ namespace PaintingsGenerator.Images {
             var positionsToRecover = new List<Position>();
             var colorsToRecover = new List<RGBColor>();
 
+            var bounds = GetBounds();
             var positions = new PositionManager();
-            for (int i = 0; i < stroke.Positions.Count - 1; ++i) {
-                var curPos = stroke.Positions[i];
-                var nextPos = stroke.Positions[i + 1];
-                var bounds = GetBounds(curPos.Position, curPos.Radius, nextPos.Position, nextPos.Radius);
-
-                positions.StoreStrokePositions(bounds, curPos, nextPos);
-            }
+            positions.StoreStrokePositions(bounds, stroke.Positions);
 
             foreach (var pos in positions.StoredPositions) {
                 positionsToRecover.Add(pos);

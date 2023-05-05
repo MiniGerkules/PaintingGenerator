@@ -14,7 +14,16 @@ namespace PaintingsGenerator.Images.ImageStuff {
         private LineFunc upperBoundFunc = new(0, 0);
         private LineFunc lowerBoundFunc = new(0, 0);
 
-        public void StoreStrokePositions(Bounds bounds, StrokePivot start, StrokePivot end) {
+        public void StoreStrokePositions(Bounds bounds, StrokePositions positions) {
+            for (int i = 0; i < positions.Count - 1; ++i) {
+                var curPos = positions[i];
+                var nextPos = positions[i + 1];
+
+                StoreStrokePositions(bounds, curPos, nextPos);
+            }
+        }
+
+        private void StoreStrokePositions(Bounds bounds, StrokePivot start, StrokePivot end) {
             this.bounds = bounds;
             if (start.Position.X > end.Position.X) (start, end) = (end, start);
 
