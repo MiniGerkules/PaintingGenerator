@@ -9,7 +9,7 @@ using PaintingsGenerator.StrokesLib.Colors;
 
 namespace PaintingsGenerator.Images.ImageStuff {
     public class Stroke : IBitmapConvertable {
-        public StrokePositions Positions { get; }
+        public StrokePositions PivotPositions { get; }
         public IStrokeColor Color { get; }
 
         private ImmutableHashSet<Position>? allPositions = null;
@@ -17,12 +17,12 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
         private ImmutableHashSet<Position> GetAllPositions() {
             var manager = new PositionManager();
-            manager.StoreStrokePositions(Positions);
+            manager.StoreStrokePositions(PivotPositions);
             return manager.StoredPositions;
         }
 
         public Stroke(StrokePositions positions, IStrokeColor color) {
-            Positions = positions;
+            PivotPositions = positions;
             Color = color;
         }
 
@@ -30,7 +30,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
             int leftBound = int.MaxValue, rightBound = int.MinValue;
             int upBound = int.MinValue, downBound = int.MaxValue;
 
-            foreach (var pos in Positions) {
+            foreach (var pos in PivotPositions) {
                 leftBound = Math.Min(leftBound, pos.Position.X - (int)pos.Radius);
                 rightBound = Math.Max(rightBound, pos.Position.X + (int)pos.Radius);
                 upBound = Math.Max(upBound, pos.Position.Y + (int)pos.Radius);
@@ -41,10 +41,10 @@ namespace PaintingsGenerator.Images.ImageStuff {
         }
 
         public StrokeParameters GetParameters() {
-            var positions = Positions.Select(elem => elem.Position).ToImmutableList();
+            var positions = PivotPositions.Select(elem => elem.Position).ToImmutableList();
 
             return new(
-                (double)Positions.Length / (2*Positions.AvgRadius),
+                (double)PivotPositions.Length / (2*PivotPositions.AvgRadius),
                 Approximator.GetQuadraticApproximation(positions).Curvative
             );
         }
