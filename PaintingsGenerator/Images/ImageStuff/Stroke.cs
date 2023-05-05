@@ -1,15 +1,27 @@
 ﻿using System;
 using System.Linq;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Collections.Immutable;
 
 using PaintingsGenerator.MathStuff;
+using PaintingsGenerator.StrokesLib.Colors;
 
 namespace PaintingsGenerator.Images.ImageStuff {
-    public class Stroke<ColorType> {
+    public class Stroke : IBitmapConvertable {
         public StrokePositions Positions { get; }
-        public ColorType Color { get; }
+        public IStrokeColor Color { get; }
 
-        public Stroke(StrokePositions positions, ColorType color) {
+        private ImmutableHashSet<Position>? allPositions = null;
+        public ImmutableHashSet<Position> AllPositions => allPositions ??= GetAllPositions();
+
+        private ImmutableHashSet<Position> GetAllPositions() {
+            var manager = new PositionManager();
+            manager.StoreStrokePositions(Positions);
+            return manager.StoredPositions;
+        }
+
+        public Stroke(StrokePositions positions, IStrokeColor color) {
             Positions = positions;
             Color = color;
         }
@@ -35,6 +47,37 @@ namespace PaintingsGenerator.Images.ImageStuff {
                 (double)Positions.Length / (2*Positions.AvgRadius),
                 Approximator.GetQuadraticApproximation(positions).Curvative
             );
+        }
+
+        public BitmapSource ToBitmap() {
+            var bounds = GetStrokeBounds();
+            var pixelFormat = PixelFormats.Bgra32;
+            var bytesPerPixel = (pixelFormat.BitsPerPixel + 7) / 8;
+
+            var height = bounds.UpY - bounds.DownY + 1;
+            var width = bounds.RightX - bounds.LeftX + 1;
+            var stride = width * bytesPerPixel;
+
+            var vals = new byte[height * stride];
+            foreach (var pos in AllPositions) {
+                if (!bounds.InBounds(pos)) continue;
+
+                var newPosX = pos.X - bounds.LeftX;
+                var newPosY = pos.Y - bounds.DownY;
+
+                var color = Color.ToColor();
+                vals[newPosY*stride + newPosX*bytesPerPixel + 0] = color.B;
+                vals[newPosY*stride + newPosX*bytesPerPixel + 1] = color.G;
+                vals[newPosY*stride + newPosX*bytesPerPixel + 2] = color.R;
+                vals[newPosY*stride + newPosX*bytesPerPixel + 3] = color.A;
+            }
+
+            var stroke = BitmapSource.Create(
+                width, height, 96, 96, pixelFormat, null, vals, stride
+            );
+            stroke.Freeze();
+
+            return stroke;
         }
     }
 }
