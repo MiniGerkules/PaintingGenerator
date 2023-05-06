@@ -8,10 +8,10 @@ namespace PaintingsGenerator.StrokesLib {
         public static StrokeParameters GetParameters(Uri pathToStroke) {
             var libStroke = LibStroke<RGBAProducer>.Create(pathToStroke);
 
-            var length = Math.Max(libStroke.Width, libStroke.Height);
-            var width = Math.Min(libStroke.Width, libStroke.Height);
-
-            return new((double)length / width, libStroke.CountCurvature());
+            return new(
+                (double)libStroke.Length / libStroke.Width,
+                libStroke.CountCurvature()
+            );
         }
     }
 }
