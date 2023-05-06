@@ -17,6 +17,7 @@ namespace PaintingsGenerator.StrokesLib {
 
         public double Length { get; private set; } = 0;
         public double Width { get; private set; } = 0;
+        public double ImageWidth => Math.Min(pixels.GetLength(0), pixels.GetLength(1));
 
         private LibStroke(IStrokeColor[,] pixels) {
             this.pixels = pixels;
