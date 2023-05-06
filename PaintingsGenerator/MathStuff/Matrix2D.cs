@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace PaintingsGenerator.MathStuff {
     public class Matrix2D {
@@ -93,7 +93,7 @@ namespace PaintingsGenerator.MathStuff {
         public void SetColumn(int index, Vector newColumn) {
             if (newColumn.IsRow) throw new ArgumentException("Must be column!");
             if (newColumn.Size != Rows) throw new ArgumentException("Wrong size!");
-            
+
             if (!matrix.First().IsRow) {
                 matrix[index] = newColumn;
             } else {
