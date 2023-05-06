@@ -45,7 +45,7 @@ namespace PaintingsGenerator.Images.ImageStuff {
 
             return new(
                 (double)PivotPositions.Length / (2*PivotPositions.AvgRadius),
-                Approximator.GetQuadraticApproximation(positions).Curvative
+                Approximator.GetQuadraticApproximation(positions).GetCurvative()
             );
         }
 

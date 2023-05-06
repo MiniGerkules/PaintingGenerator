@@ -21,7 +21,7 @@ namespace PaintingsGenerator.MathStuff {
             return new(k, b);
         }
 
-        public static QuadraticFunc GetQuadraticApproximation(ImmutableList<Position> positions) {
+        public static ParametricQuadraticFunc GetQuadraticApproximation(ImmutableList<Position> positions) {
             // LSM in parametric coordinates
             int Np = positions.Count;
 
@@ -59,19 +59,7 @@ namespace PaintingsGenerator.MathStuff {
             answers = ET * V;
             var hy = GausMethod.Solve(coefs, answers);
 
-            // estimates of impact of every term
-            double a = hx[2], b = hx[1], c = hx[0];
-
-            hx.Abs(); hy.Abs();
-            var sparams = new double[] {
-                t2.Select(d => d * hx[2]).Sum()/Np + t2.Select(d => d * hy[2]).Sum()/Np,
-                t.Select(d => d * hx[1]).Sum()/Np + t.Select(d => d * hy[1]).Sum()/Np,
-                hx[0] + hy[0]
-            };
-
-            double curvative = sparams[0] / sparams.Sum();
-
-            return new(a, b, c, curvative);
+            return new(new(hx[2], hx[1], hx[0]), new(hy[2], hy[1], hy[0]), t);
         }
     }
 }

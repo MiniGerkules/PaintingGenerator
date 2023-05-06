@@ -83,7 +83,7 @@ namespace PaintingsGenerator.StrokesLib {
 
         public double CountCurvature() {
             var positions = GetSkeletonPositions();
-            return Approximator.GetQuadraticApproximation(positions.ToImmutableList()).Curvative;
+            return Approximator.GetQuadraticApproximation(positions.ToImmutableList()).GetCurvative();
         }
 
         private List<Position> GetSkeletonPositions() {
