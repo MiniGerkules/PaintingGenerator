@@ -53,13 +53,14 @@ namespace PaintingsGenerator.Images {
 
             var libStroke = StrokeLibManager.GetLibStroke<RGBAProducer>(stroke.GetParameters());
             libStroke.ChangeColor(stroke.Color);
+            var halfLibStrokeWidth = stroke.PivotPositions.AvgRadius * libStroke.ImageWidth / libStroke.Width;
 
             var bounds = stroke.GetStrokeBounds();
             double xLeft = bounds.LeftX, xRight = bounds.RightX, yLeft = bounds.DownY, yRight = bounds.UpY;
 
             if (Math.Abs(approximation.K) <= 1e-5) { // horizontal
-                yLeft += 2 * stroke.PivotPositions.AvgRadius;
-                yRight += 2 * stroke.PivotPositions.AvgRadius;
+                yLeft += 2 * halfLibStrokeWidth;
+                yRight += 2 * halfLibStrokeWidth;
             } else if (double.IsNormal(approximation.K)) {
                 double angleForBias = Math.Atan(approximation.GetKForPerp());
 
@@ -75,8 +76,8 @@ namespace PaintingsGenerator.Images {
                     xRight = approximation.CountX(yRight);
                 }
 
-                double yBias = Math.Abs(Math.Sin(angleForBias)) * stroke.PivotPositions.AvgRadius;
-                double xBias = approximation.K < 0 ? Math.Cos(angleForBias) * stroke.PivotPositions.AvgRadius : 0;
+                double yBias = Math.Abs(Math.Sin(angleForBias)) * halfLibStrokeWidth;
+                double xBias = approximation.K < 0 ? Math.Cos(angleForBias) * halfLibStrokeWidth : 0;
 
                 xLeft += xBias;
                 xRight += xBias;
@@ -89,7 +90,7 @@ namespace PaintingsGenerator.Images {
             if (double.IsNaN(strokeAngle)) strokeAngle = 0;
 
             var strokeInImg = new ImageDrawing() {
-                Rect = new(xLeft, yLeft, 2*stroke.PivotPositions.AvgRadius, length),
+                Rect = new(xLeft, yLeft, 2*halfLibStrokeWidth, length),
                 ImageSource = libStroke.ToBitmap(),
             };
             lastStroke = new DrawingGroup() {
