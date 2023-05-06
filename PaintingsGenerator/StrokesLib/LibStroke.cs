@@ -10,7 +10,9 @@ using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.StrokesLib {
     internal class LibStroke<ColorProducer> where ColorProducer : IColorProducer, new() {
+        private static readonly Color skeletonLineColor = Color.FromArgb(255, 255, 0, 0);
         private static readonly ColorProducer colorProducer = new();
+
         private readonly IStrokeColor[,] pixels;
 
         public int Width => pixels.GetLength(1);
@@ -79,18 +81,22 @@ namespace PaintingsGenerator.StrokesLib {
             return bitmap;
         }
 
-        public double CountCurvatureByLine(Color lineColor) {
+        public double CountCurvature() {
+            var positions = GetSkeletonPositions();
+            return Approximator.GetQuadraticApproximation(positions.ToImmutableList()).Curvative;
+        }
+
+        private List<Position> GetSkeletonPositions() {
             var positions = new List<Position>();
+
             for (int y = 0, endY = pixels.GetLength(0); y < endY; ++y) {
                 for (int x = 0, endX = pixels.GetLength(1); x < endX; ++x) {
-                    //if (!pixels[y, x].IsTransparent)
-                    //    positions.Add(new(x, y));
-                    if (pixels[y, x].IsEqual(lineColor))
+                    if (pixels[y, x].IsEqual(skeletonLineColor))
                         positions.Add(new(x, y));
                 }
             }
 
-            return Approximator.GetQuadraticApproximation(positions.ToImmutableList()).Curvative;
+            return positions;
         }
     }
 }
