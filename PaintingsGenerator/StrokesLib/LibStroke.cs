@@ -16,7 +16,7 @@ namespace PaintingsGenerator.StrokesLib {
         private readonly IStrokeColor[,] pixels;
 
         public ImmutableList<Position> Skeleton { get; }
-        public double Curvative { get; }
+        public double Curvature { get; }
 
         public double Length { get; private set; } = 0;
         public double Width { get; private set; } = 0;
@@ -25,7 +25,7 @@ namespace PaintingsGenerator.StrokesLib {
         private LibStroke(IStrokeColor[,] pixels) {
             this.pixels = pixels;
             Skeleton = GetSkeleton();
-            Curvative = Approximator.GetQuadraticApproximation(Skeleton).GetCurvative();
+            Curvature = Approximator.GetQuadraticApproximation(Skeleton).GetCurvative();
 
             DetermineWidthHeight();
         }
@@ -34,7 +34,7 @@ namespace PaintingsGenerator.StrokesLib {
                           double curvative, double length, double width) {
             this.pixels = pixels;
             Skeleton = skeleton;
-            Curvative = curvative;
+            Curvature = curvative;
             Length = length;
             Width = width;
         }
@@ -79,7 +79,7 @@ namespace PaintingsGenerator.StrokesLib {
                 }
             }
 
-            return new(pixels, stroke.Skeleton, stroke.Curvative, stroke.Length, stroke.Width);
+            return new(pixels, stroke.Skeleton, stroke.Curvature, stroke.Length, stroke.Width);
         }
 
         public void ChangeColor(IStrokeColor color) {
