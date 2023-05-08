@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows.Media;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,10 +11,12 @@ using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.StrokesLib {
     internal class LibStroke<ColorProducer> where ColorProducer : IColorProducer, new() {
-        private static readonly Color skeletonLineColor = Color.FromArgb(255, 255, 0, 0);
         private static readonly ColorProducer colorProducer = new();
 
         private readonly IStrokeColor[,] pixels;
+
+        public ImmutableList<Position> Skeleton { get; }
+        public double Curvature { get; }
 
         public double Length { get; private set; } = 0;
         public double Width { get; private set; } = 0;
@@ -21,11 +24,17 @@ namespace PaintingsGenerator.StrokesLib {
 
         private LibStroke(IStrokeColor[,] pixels) {
             this.pixels = pixels;
+            Skeleton = GetSkeleton();
+            Curvature = Approximator.GetQuadraticApproximation(Skeleton).GetCurvative();
+
             DetermineWidthHeight();
         }
 
-        private LibStroke(IStrokeColor[,] pixels, double length, double width) {
+        private LibStroke(IStrokeColor[,] pixels, ImmutableList<Position> skeleton,
+                          double curvative, double length, double width) {
             this.pixels = pixels;
+            Skeleton = skeleton;
+            Curvature = curvative;
             Length = length;
             Width = width;
         }
@@ -70,7 +79,7 @@ namespace PaintingsGenerator.StrokesLib {
                 }
             }
 
-            return new(pixels, stroke.Length, stroke.Width);
+            return new(pixels, stroke.Skeleton, stroke.Curvature, stroke.Length, stroke.Width);
         }
 
         public void ChangeColor(IStrokeColor color) {
@@ -107,21 +116,48 @@ namespace PaintingsGenerator.StrokesLib {
             return bitmap;
         }
 
-        public double CountCurvature() {
-            var positions = GetSkeletonPositions();
-            return Approximator.GetQuadraticApproximation(positions.ToImmutableList()).GetCurvative();
+        private ImmutableList<Position> GetSkeleton() {
+            var allPositions = GetAllStrokePositions();
+            var approximation = Approximator.GetQuadraticApproximation(allPositions);
+            var skeleton = new List<Position>() {
+                new((int)approximation.CountX(approximation.Parameter.First()),
+                    (int)approximation.CountY(approximation.Parameter.First()))
+            };
+
+            foreach (var param in approximation.Parameter) {
+                var newX = (int)approximation.CountX(param);
+                var newY = (int)approximation.CountX(param);
+
+                if (skeleton[^1].X != newX || skeleton[^1].Y != newY)
+                    skeleton.Add(new(newX, newY));
+            }
+
+            return skeleton.ToImmutableList();
+        }
+
+        private ImmutableList<Position> GetAllStrokePositions() {
+            int height = pixels.GetLength(0), width = pixels.GetLength(1);
+            List<Position> positions = new();
+
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    if (!pixels[y, x].IsTransparent)
+                        positions.Add(new(x, y));
+                }
+            }
+
+            return positions.ToImmutableList();
         }
 
         private void DetermineWidthHeight() {
-            var positions = GetSkeletonPositions();
             long xSum = 0, ySum = 0;
-            for (int i = 1; i < positions.Count; ++i) {
-                xSum += positions[i].X - positions[i - 1].X;
-                ySum += positions[i].Y - positions[i - 1].Y;
+            for (int i = 1; i < Skeleton.Count; ++i) {
+                xSum += Skeleton[i].X - Skeleton[i - 1].X;
+                ySum += Skeleton[i].Y - Skeleton[i - 1].Y;
             }
             Length = Math.Sqrt(xSum*xSum + ySum*ySum);
 
-            var quadratic = Approximator.GetQuadraticApproximation(positions.ToImmutableList());
+            var quadratic = Approximator.GetQuadraticApproximation(Skeleton);
             var bounds = new Bounds(0, pixels.GetLength(1) - 1, 0, pixels.GetLength(0) - 1);
 
             List<double> widths = new();
@@ -162,19 +198,6 @@ namespace PaintingsGenerator.StrokesLib {
             } while (bounds.InBounds(curPos) && !pixels[curPos.Y, curPos.X].IsTransparent);
 
             return edge;
-        }
-
-        private List<Position> GetSkeletonPositions() {
-            var positions = new List<Position>();
-
-            for (int y = 0, endY = pixels.GetLength(0); y < endY; ++y) {
-                for (int x = 0, endX = pixels.GetLength(1); x < endX; ++x) {
-                    if (pixels[y, x].IsEqual(skeletonLineColor))
-                        positions.Add(new(x, y));
-                }
-            }
-
-            return positions;
         }
     }
 }
