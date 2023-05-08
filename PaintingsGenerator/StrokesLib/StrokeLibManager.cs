@@ -50,10 +50,15 @@ namespace PaintingsGenerator.StrokesLib {
             if (!Directory.Exists(pathToLib)) throw new FileLoadException("Can't load library of strokes!");
 
             foreach (var file in Directory.EnumerateFiles(pathToLib)) {
-                if (!file.EndsWith(".png")) continue;
+                if (!file.EndsWith(".jpg")) continue;
 
-                var libStroke = LibStroke<RGBAProducer>.Create(new(file, UriKind.Relative));
+                var fileName = Path.GetFileNameWithoutExtension(file);
+                if (fileName.EndsWith("n")) continue;
+                var normals = file.Replace(fileName, fileName + "n");
+
+                var libStroke = LibStroke<RGBAProducer>.Create(new(file, UriKind.Relative), new(normals, UriKind.Relative));
                 var parameters = LibStrokeParamsManager.GetParameters(libStroke);
+
                 strokesLib.Add(parameters, libStroke);
             }
 
