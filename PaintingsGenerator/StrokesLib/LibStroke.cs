@@ -13,12 +13,16 @@ namespace PaintingsGenerator.StrokesLib {
     internal class LibStroke<ColorProducer> where ColorProducer : IColorProducer, new() {
         private static readonly ColorProducer colorProducer = new();
 
-
         public ImmutableList<Position> Skeleton { get; }
-        public double Curvature { get; }
 
-        public double Length { get; private set; } = 0;
-        public double Width { get; private set; } = 0;
+        private double? curvature = null;
+        public double Curvature => curvature ??= Approximator.GetQuadraticApproximation(Skeleton).GetCurvative();
+
+        private double? length = null;
+        public double Length => length ??= GetLength();
+
+        private double? width = null;
+        public double Width => width ??= GetWidth();
 
         private readonly IStrokeColor[,] pixels;
         public double ImgHeight => pixels.GetLength(0);
@@ -27,18 +31,11 @@ namespace PaintingsGenerator.StrokesLib {
         private LibStroke(IStrokeColor[,] pixels) {
             this.pixels = pixels;
             Skeleton = GetSkeleton();
-            Curvature = Approximator.GetQuadraticApproximation(Skeleton).GetCurvative();
-
-            DetermineWidthHeight();
         }
 
-        private LibStroke(IStrokeColor[,] pixels, ImmutableList<Position> skeleton,
-                          double curvative, double length, double width) {
+        private LibStroke(IStrokeColor[,] pixels, ImmutableList<Position> skeleton) {
             this.pixels = pixels;
             Skeleton = skeleton;
-            Curvature = curvative;
-            Length = length;
-            Width = width;
         }
 
         public static LibStroke<ColorProducer> Create(Uri pathToStroke) {
@@ -81,7 +78,7 @@ namespace PaintingsGenerator.StrokesLib {
                 }
             }
 
-            return new(pixels, stroke.Skeleton, stroke.Curvature, stroke.Length, stroke.Width);
+            return new(pixels, stroke.Skeleton);
         }
 
         public void ChangeColor(IStrokeColor color) {
@@ -151,29 +148,33 @@ namespace PaintingsGenerator.StrokesLib {
             return positions.ToImmutableList();
         }
 
-        private void DetermineWidthHeight() {
+        private double GetLength() {
             long xSum = 0, ySum = 0;
+
             for (int i = 1; i < Skeleton.Count; ++i) {
                 xSum += Skeleton[i].X - Skeleton[i - 1].X;
                 ySum += Skeleton[i].Y - Skeleton[i - 1].Y;
             }
-            Length = Math.Sqrt(xSum*xSum + ySum*ySum);
 
+            return Math.Sqrt(xSum*xSum + ySum*ySum);
+        }
+
+        private double GetWidth() {
             var quadratic = Approximator.GetQuadraticApproximation(Skeleton);
             var bounds = new Bounds(0, pixels.GetLength(1) - 1, 0, pixels.GetLength(0) - 1);
 
-            List<double> widths = new();
+            double width = double.NegativeInfinity;
             foreach (var paramVal in quadratic.Parameter) {
                 var derativeX0 = quadratic.DerivativeAt(paramVal);
                 double x0 = quadratic.CountX(paramVal), y0 = quadratic.CountY(paramVal);
 
                 // y = (-1/f'(x0))*x + (1/f'(x0))*x0 + f(x0)
                 var perpFunc = new LineFunc(-1/derativeX0, 1/derativeX0*x0 + y0);
-                widths.Add(GetWidthInPoint(bounds, perpFunc, (int)x0, (int)y0));
+                var curWidth = GetWidthInPoint(bounds, perpFunc, (int)x0, (int)y0);
+                width = Math.Max(curWidth, width);
             }
 
-            Width = 0;
-            widths.ForEach(width => Width += width / widths.Count);
+            return width;
         }
 
         private double GetWidthInPoint(Bounds bounds, LineFunc perp, int x0, int y0) {
