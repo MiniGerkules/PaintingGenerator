@@ -141,15 +141,14 @@ namespace PaintingsGenerator.StrokesLib {
         }
 
         private void DetermineWidthHeight() {
-            var positions = GetSkeletonPositions();
             long xSum = 0, ySum = 0;
-            for (int i = 1; i < positions.Count; ++i) {
-                xSum += positions[i].X - positions[i - 1].X;
-                ySum += positions[i].Y - positions[i - 1].Y;
+            for (int i = 1; i < Skeleton.Count; ++i) {
+                xSum += Skeleton[i].X - Skeleton[i - 1].X;
+                ySum += Skeleton[i].Y - Skeleton[i - 1].Y;
             }
             Length = Math.Sqrt(xSum*xSum + ySum*ySum);
 
-            var quadratic = Approximator.GetQuadraticApproximation(positions.ToImmutableList());
+            var quadratic = Approximator.GetQuadraticApproximation(Skeleton);
             var bounds = new Bounds(0, pixels.GetLength(1) - 1, 0, pixels.GetLength(0) - 1);
 
             List<double> widths = new();
