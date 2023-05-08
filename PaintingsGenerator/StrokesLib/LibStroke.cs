@@ -138,8 +138,8 @@ namespace PaintingsGenerator.StrokesLib {
             return bitmap;
         }
 
-        private ImmutableList<Position> GetSkeleton() {
-            var allPositions = GetAllStrokePositions();
+        private static ImmutableList<Position> GetSkeleton(IStrokeColor[,] pixels) {
+            var allPositions = GetAllStrokePositions(pixels);
             var approximation = Approximator.GetQuadraticApproximation(allPositions);
             var skeleton = new List<Position>() {
                 new((int)approximation.CountX(approximation.Parameter.First()),
@@ -157,7 +157,7 @@ namespace PaintingsGenerator.StrokesLib {
             return skeleton.ToImmutableList();
         }
 
-        private ImmutableList<Position> GetAllStrokePositions() {
+        private static ImmutableList<Position> GetAllStrokePositions(IStrokeColor[,] pixels) {
             int height = pixels.GetLength(0), width = pixels.GetLength(1);
             List<Position> positions = new();
 
