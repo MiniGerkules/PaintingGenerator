@@ -12,6 +12,7 @@ using PaintingsGenerator.StrokesLib.ColorProducers;
 namespace PaintingsGenerator.StrokesLib {
     internal class LibStroke<ColorProducer> where ColorProducer : IColorProducer, new() {
         private static readonly ColorProducer colorProducer = new();
+        private static readonly byte alphaTolerance = 1;
 
         public ImmutableList<Position> Skeleton { get; }
 
@@ -28,39 +29,59 @@ namespace PaintingsGenerator.StrokesLib {
         public double ImgHeight => pixels.GetLength(0);
         public double ImgWidth => pixels.GetLength(1);
 
-        private LibStroke(IStrokeColor[,] pixels) {
-            this.pixels = pixels;
-            Skeleton = GetSkeleton();
+        private readonly double[,] nx, ny, nz;
+
+        private LibStroke(IStrokeColor[,] pixels, double[,] nx, double[,] ny, double[,] nz)
+                : this(pixels, GetSkeleton(pixels), nx, ny, nz) {
         }
 
-        private LibStroke(IStrokeColor[,] pixels, ImmutableList<Position> skeleton) {
+        private LibStroke(IStrokeColor[,] pixels, ImmutableList<Position> skeleton,
+                          double[,] nx, double[,] ny, double[,] nz) {
             this.pixels = pixels;
             Skeleton = skeleton;
+
+            this.nx = nx;
+            this.ny = ny;
+            this.nz = nz;
         }
 
-        public static LibStroke<ColorProducer> Create(Uri pathToStroke) {
-            var image = new BitmapImage(pathToStroke);
-            if (image.Format != PixelFormats.Bgra32)
+        public static LibStroke<ColorProducer> Create(Uri pathToStroke, Uri normalsPath) {
+            BitmapSource stroke = new BitmapImage(pathToStroke), normals = new BitmapImage(normalsPath);
+            if (stroke.Format != PixelFormats.Bgr32 || normals.Format != PixelFormats.Bgr32)
                 throw new FormatException("ERROR! Image must be in Bgra32 format!");
+            if (stroke.PixelWidth != normals.PixelWidth || stroke.PixelHeight != normals.PixelHeight)
+                throw new FormatException("ERROR! Images must be the same size!");
 
-            int height = image.PixelHeight, width = image.PixelWidth;
-            int bytesPerPixel = (image.Format.BitsPerPixel + 7) / 8;
+            int height = stroke.PixelHeight, width = stroke.PixelWidth;
             var pixels = new IStrokeColor[height, width];
 
-            byte[] vals = new byte[bytesPerPixel * width * height];
-            image.CopyPixels(vals, bytesPerPixel * width, 0);
+            int strokeBytesPerPixel = (stroke.Format.BitsPerPixel + 7) / 8;
+            byte[] alphaVals = new byte[strokeBytesPerPixel * width * height];
+            stroke.CopyPixels(alphaVals, strokeBytesPerPixel * width, 0);
+
+            int normalsBytesPerPixel = (normals.Format.BitsPerPixel + 7) / 8;
+            byte[] normalVals = new byte[normalsBytesPerPixel * width * height];
+            normals.CopyPixels(normalVals, normalsBytesPerPixel * width, 0);
+            var nx = new double[height, width];
+            var ny = new double[height, width];
+            var nz = new double[height, width];
 
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
-                    int blockStart = y * bytesPerPixel * width + x * bytesPerPixel;
-                    byte blue = vals[blockStart + 0], green = vals[blockStart + 1];
-                    byte red = vals[blockStart + 2], alpha = vals[blockStart + 3];
-
+                    int strokeBlockStart = y*strokeBytesPerPixel*width + x*strokeBytesPerPixel;
+                    byte blue = alphaVals[strokeBlockStart], green = alphaVals[strokeBlockStart + 1];
+                    byte red = alphaVals[strokeBlockStart + 2], alpha = Math.Max(Math.Max(blue, green), red);
+                    alpha = alpha > alphaTolerance ? alpha : (byte)0;
                     pixels[y, x] = colorProducer.FromBgra32(blue, green, red, alpha);
+
+                    int normalsBlockStart = y*normalsBytesPerPixel*width + x*normalsBytesPerPixel;
+                    nx[y, x] = (double)normalVals[normalsBlockStart]/byte.MaxValue - 1;
+                    ny[y, x] = (double)normalVals[normalsBlockStart + 1]/byte.MaxValue - 1;
+                    nz[y, x] = (double)normalVals[normalsBlockStart + 2]/byte.MaxValue - 1;
                 }
             }
 
-            return new(pixels);
+            return new(pixels, nx, ny, nz);
         }
 
         public static LibStroke<ColorProducer> Copy<SourceColProducer>(LibStroke<SourceColProducer> stroke)
@@ -78,7 +99,7 @@ namespace PaintingsGenerator.StrokesLib {
                 }
             }
 
-            return new(pixels, stroke.Skeleton);
+            return new(pixels, stroke.Skeleton, stroke.nx, stroke.ny, stroke.nz);
         }
 
         public void ChangeColor(IStrokeColor color) {
