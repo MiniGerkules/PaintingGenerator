@@ -7,7 +7,7 @@ namespace PaintingsGenerator.StrokesLib {
                 where ColorProducer : IColorProducer, new() {
             return new(
                 (double)libStroke.Length / libStroke.Width,
-                libStroke.CountCurvature()
+                libStroke.Curvative
             );
         }
     }
