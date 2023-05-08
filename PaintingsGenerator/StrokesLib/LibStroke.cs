@@ -109,6 +109,8 @@ namespace PaintingsGenerator.StrokesLib {
                 for (int x = 0, endX = pixels.GetLength(1); x < endX; ++x)
                     pixels[y, x] = colorProducer.Update(pixels[y, x], updatingColor);
             }
+
+            ShadingByPhong();
         }
 
         public BitmapSource ToBitmap() {
@@ -222,6 +224,41 @@ namespace PaintingsGenerator.StrokesLib {
             } while (bounds.InBounds(curPos) && !pixels[curPos.Y, curPos.X].IsTransparent);
 
             return edge;
+        }
+
+        private void ShadingByPhong() {
+            int height = pixels.GetLength(0), width = pixels.GetLength(1);
+
+            double ks = 0.1; // Коэффициент бликов
+            double kd = 0.3; // Коэффициент диффузного света
+            double ka = 0.7; // Коэффициент окружающего цвета
+            double alpha = 20; // степень отражения
+            Color glareColor = Color.FromRgb(255, 255, 255); // цвет падающего на изображения цвета, который видно в бликах
+
+            var Lm = new Vector(new double[] { 0.5, 0.5, -3 }); // вектор направления света
+            Lm.Norm();
+            var V = new Vector(new double[] { 0, 0, -1 }); // вектор на наблюдателя
+
+            for (int i = 0; i < height; ++i) {
+                for (int j = 0; j < width; ++j) {
+                    if (pixels[i, j].IsTransparent) {
+                        // сделаем вектор нормали для удобства матлабовским вектором
+                        var nvect = new Vector(new double[] { nx[i, j], ny[i, j], nz[i, j] });
+                        var NdotL = Vector.ScalarProd(Lm, nvect); // умножим скалярно nvect на Lm
+                        NdotL = Math.Min(Math.Max(NdotL, 0), 1); // оставим в рамках [0; 1]
+                        var Rv = 2*NdotL*nvect - Lm; // найдем вектор Rv по формуле
+
+                        // посчитаем каждый из R,G,B компонентов отдельно по модели Фонга
+                        var curColor = pixels[i, j].ToColor();
+                        var multiplier = ks*Math.Pow(Vector.ScalarProd(Rv, V), alpha);
+                        var newRed = ka*curColor.R + kd*NdotL*curColor.R + multiplier*glareColor.R;
+                        var newGreen = ka*curColor.G + kd*NdotL*curColor.G + multiplier*glareColor.G;
+                        var newBlue = ka*curColor.B + kd*NdotL*curColor.B + multiplier*glareColor.B;
+
+                        pixels[i, j] = colorProducer.FromBgra32((byte)newBlue, (byte)newGreen, (byte)newRed, curColor.A);
+                    }
+                }
+            }
         }
     }
 }
