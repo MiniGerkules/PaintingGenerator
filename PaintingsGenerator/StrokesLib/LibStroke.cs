@@ -13,14 +13,16 @@ namespace PaintingsGenerator.StrokesLib {
     internal class LibStroke<ColorProducer> where ColorProducer : IColorProducer, new() {
         private static readonly ColorProducer colorProducer = new();
 
-        private readonly IStrokeColor[,] pixels;
 
         public ImmutableList<Position> Skeleton { get; }
         public double Curvature { get; }
 
         public double Length { get; private set; } = 0;
         public double Width { get; private set; } = 0;
-        public double ImageWidth => Math.Min(pixels.GetLength(0), pixels.GetLength(1));
+
+        private readonly IStrokeColor[,] pixels;
+        public double ImgHeight => pixels.GetLength(0);
+        public double ImgWidth => pixels.GetLength(1);
 
         private LibStroke(IStrokeColor[,] pixels) {
             this.pixels = pixels;

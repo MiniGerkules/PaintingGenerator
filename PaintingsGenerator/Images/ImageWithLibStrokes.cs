@@ -53,7 +53,7 @@ namespace PaintingsGenerator.Images {
 
             var libStroke = StrokeLibManager.GetLibStroke<RGBAProducer>(stroke.GetParameters());
             libStroke.ChangeColor(stroke.Color);
-            var halfLibStrokeWidth = stroke.PivotPositions.AvgRadius * libStroke.ImageWidth / libStroke.Width;
+            var halfLibStrokeWidth = stroke.PivotPositions.AvgRadius * libStroke.ImgWidth / libStroke.Width;
 
             var bounds = stroke.GetStrokeBounds();
             double xLeft = bounds.LeftX, xRight = bounds.RightX, yLeft = bounds.DownY, yRight = bounds.UpY;
