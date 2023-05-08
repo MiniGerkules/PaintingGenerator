@@ -107,9 +107,37 @@ namespace PaintingsGenerator.StrokesLib {
             return bitmap;
         }
 
-        public double CountCurvature() {
-            var positions = GetSkeletonPositions();
-            return Approximator.GetQuadraticApproximation(positions.ToImmutableList()).GetCurvative();
+        private ImmutableList<Position> GetSkeleton() {
+            var allPositions = GetAllStrokePositions();
+            var approximation = Approximator.GetQuadraticApproximation(allPositions);
+            var skeleton = new List<Position>() {
+                new((int)approximation.CountX(approximation.Parameter.First()),
+                    (int)approximation.CountY(approximation.Parameter.First()))
+            };
+
+            foreach (var param in approximation.Parameter) {
+                var newX = (int)approximation.CountX(param);
+                var newY = (int)approximation.CountX(param);
+
+                if (skeleton[^1].X != newX || skeleton[^1].Y != newY)
+                    skeleton.Add(new(newX, newY));
+            }
+
+            return skeleton.ToImmutableList();
+        }
+
+        private ImmutableList<Position> GetAllStrokePositions() {
+            int height = pixels.GetLength(0), width = pixels.GetLength(1);
+            List<Position> positions = new();
+
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    if (!pixels[y, x].IsTransparent)
+                        positions.Add(new(x, y));
+                }
+            }
+
+            return positions.ToImmutableList();
         }
 
         private void DetermineWidthHeight() {
