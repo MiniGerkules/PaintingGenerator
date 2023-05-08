@@ -24,6 +24,12 @@ namespace PaintingsGenerator.StrokesLib {
             DetermineWidthHeight();
         }
 
+        private LibStroke(IStrokeColor[,] pixels, double length, double width) {
+            this.pixels = pixels;
+            Length = length;
+            Width = width;
+        }
+
         public static LibStroke<ColorProducer> Create(Uri pathToStroke) {
             var image = new BitmapImage(pathToStroke);
             if (image.Format != PixelFormats.Bgra32)
@@ -47,6 +53,24 @@ namespace PaintingsGenerator.StrokesLib {
             }
 
             return new(pixels);
+        }
+
+        public static LibStroke<ColorProducer> Copy<SourceColProducer>(LibStroke<SourceColProducer> stroke)
+                where SourceColProducer : IColorProducer, new() {
+            int height = stroke.pixels.GetLength(0), width = stroke.pixels.GetLength(1);
+            var pixels = new IStrokeColor[height, width];
+
+            if (typeof(ColorProducer) == typeof(SourceColProducer)) {
+                Array.Copy(stroke.pixels, pixels, stroke.pixels.Length);
+            } else {
+                var producer = new SourceColProducer();
+                for (int y = 0; y < height; ++y) {
+                    for (int x = 0; x < width; ++x)
+                        pixels[y, x] = producer.FromColor(stroke.pixels[y, x].ToColor());
+                }
+            }
+
+            return new(pixels, stroke.Length, stroke.Width);
         }
 
         public void ChangeColor(IStrokeColor color) {
