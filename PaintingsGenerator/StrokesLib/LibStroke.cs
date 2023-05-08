@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows.Media;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,7 +11,6 @@ using PaintingsGenerator.StrokesLib.ColorProducers;
 
 namespace PaintingsGenerator.StrokesLib {
     internal class LibStroke<ColorProducer> where ColorProducer : IColorProducer, new() {
-        private static readonly Color skeletonLineColor = Color.FromArgb(255, 255, 0, 0);
         private static readonly ColorProducer colorProducer = new();
 
         private readonly IStrokeColor[,] pixels;
@@ -162,19 +162,6 @@ namespace PaintingsGenerator.StrokesLib {
             } while (bounds.InBounds(curPos) && !pixels[curPos.Y, curPos.X].IsTransparent);
 
             return edge;
-        }
-
-        private List<Position> GetSkeletonPositions() {
-            var positions = new List<Position>();
-
-            for (int y = 0, endY = pixels.GetLength(0); y < endY; ++y) {
-                for (int x = 0, endX = pixels.GetLength(1); x < endX; ++x) {
-                    if (pixels[y, x].IsEqual(skeletonLineColor))
-                        positions.Add(new(x, y));
-                }
-            }
-
-            return positions;
         }
     }
 }
