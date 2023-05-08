@@ -74,11 +74,11 @@ namespace PaintingsGenerator.StrokesLib {
         }
 
         public void ChangeColor(IStrokeColor color) {
-            var hsvaColor = colorProducer.FromColor(color.ToColor());
+            var updatingColor = colorProducer.FromColor(color.ToColor());
 
             for (int y = 0, endY = pixels.GetLength(0); y < endY; ++y) {
                 for (int x = 0, endX = pixels.GetLength(1); x < endX; ++x)
-                    pixels[y, x] = colorProducer.Update(pixels[y, x], hsvaColor);
+                    pixels[y, x] = colorProducer.Update(pixels[y, x], updatingColor);
             }
         }
 
