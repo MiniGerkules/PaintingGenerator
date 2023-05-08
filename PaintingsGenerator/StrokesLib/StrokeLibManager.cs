@@ -12,7 +12,7 @@ namespace PaintingsGenerator.StrokesLib {
         private static readonly string pathToLib = @"./StrokesLib/";
         private static readonly string pathToDatabase = @"./StrokesLib/library.strokes";
 
-        private static Dictionary<StrokeParameters, LibStroke<RGBAProducer>> strokesLib = new();
+        private static readonly Dictionary<StrokeParameters, LibStroke<RGBAProducer>> strokesLib = new();
         private static readonly PropertyInfo[] strokeParametersProps = typeof(StrokeParameters).GetProperties();
 
         public static void LoadStrokesLib() {
@@ -46,7 +46,7 @@ namespace PaintingsGenerator.StrokesLib {
         }
 
         private static void CreateDatabaseFromSources(string pathToLib) {
-            strokesLib = new();
+            strokesLib.Clear();
             if (!Directory.Exists(pathToLib)) throw new FileLoadException("Can't load library of strokes!");
 
             foreach (var file in Directory.EnumerateFiles(pathToLib)) {
