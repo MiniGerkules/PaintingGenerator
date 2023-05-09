@@ -146,9 +146,9 @@ namespace PaintingsGenerator.StrokesLib {
                     (int)approximation.CountY(approximation.Parameter.First()))
             };
 
-            foreach (var param in approximation.Parameter) {
+            foreach (var param in approximation.Parameter.Skip(1)) {
                 var newX = (int)approximation.CountX(param);
-                var newY = (int)approximation.CountX(param);
+                var newY = (int)approximation.CountY(param);
 
                 if (skeleton[^1].X != newX || skeleton[^1].Y != newY)
                     skeleton.Add(new(newX, newY));
