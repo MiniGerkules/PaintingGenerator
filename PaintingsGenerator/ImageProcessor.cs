@@ -20,6 +20,8 @@ namespace PaintingsGenerator {
         public readonly ProgressVM progressVM = new();
         public readonly ActionsVM actionsVM;
 
+        public readonly MetadataSaver saver = new();
+
         public ImageProcessor() {
             eventsFlags = new List<bool>() {
                 false, // Terminate
@@ -34,17 +36,19 @@ namespace PaintingsGenerator {
             actionsVM = new(actions.ToImmutableList());
         }
 
-        public async void Process(BitmapSource toProcess, Settings settings) {
-            imageProcessorVM.Template = toProcess;
+        public async void Process(LocalBitmap toProcess, Settings settings) {
+            var source = toProcess.Bitmap;
+
+            imageProcessorVM.Template = source;
             for (int i = 0; i < eventsFlags.Count; ++i) eventsFlags[i] = false;
             eventsFlags[(int)Event.Run] = true;
 
-            var template = new RGBImage(toProcess);
+            var template = new RGBImage(source);
             var gradient = await Task.Run(() => Gradient.GetGradient(new(template)));
             var builder = new StrokeBuilder(template, gradient);
 
-            var painting = RGBImage.CreateEmpty(toProcess.PixelWidth, toProcess.PixelHeight);
-            var libStrokesImg = new ImageWithLibStrokes(toProcess.PixelWidth, toProcess.PixelHeight);
+            var painting = RGBImage.CreateEmpty(source.PixelWidth, source.PixelHeight);
+            var libStrokesImg = new ImageWithLibStrokes(source.PixelWidth, source.PixelHeight);
 
             var lastDiff = await Task.Run(() => RGBImage.GetDifference(template, painting));
             var diffToStop = lastDiff.ScaledDiff * settings.DiffWithTemplateToStopInPercent / 100;
