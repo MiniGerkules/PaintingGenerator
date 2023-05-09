@@ -85,12 +85,13 @@ namespace PaintingsGenerator.Images {
                 yRight += yBias;
             }
 
-            double length = Math.Sqrt(Math.Pow(bounds.RightX - bounds.LeftX, 2) + Math.Pow(bounds.DownY - bounds.UpY, 2));
+            double trueLength = Math.Sqrt(Math.Pow(bounds.RightX - bounds.LeftX, 2) + Math.Pow(bounds.DownY - bounds.UpY, 2));
+            double lengthScale = libStroke.ImgHeight / libStroke.Length;
             double strokeAngle = -90 + Math.Atan(approximation.K)/Math.PI * 180;
             if (double.IsNaN(strokeAngle)) strokeAngle = 0;
 
             var strokeInImg = new ImageDrawing() {
-                Rect = new(xLeft, yLeft, 2*halfLibStrokeWidth, length),
+                Rect = new(xLeft, yLeft, 2*halfLibStrokeWidth, trueLength*lengthScale),
                 ImageSource = libStroke.ToBitmap(),
             };
             lastStroke = new DrawingGroup() {
