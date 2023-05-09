@@ -37,6 +37,7 @@ namespace PaintingsGenerator {
         }
 
         public async void Process(LocalBitmap toProcess, Settings settings) {
+            saver.StartWrite(toProcess.Path);
             var source = toProcess.Bitmap;
 
             imageProcessorVM.Template = source;
@@ -70,6 +71,7 @@ namespace PaintingsGenerator {
                     lastDiff = newDiff;
                     await Task.Run(() => libStrokesImg.AddStroke(newStroke));
                     libStrokesImg.SaveStroke();
+                    saver.Write(newStroke.GetParameters());
 
                     strokeProcessorVM.GeneratedStroke = newStroke.ToBitmap();
                     strokeProcessorVM.LibStroke = libStrokesImg.LastStroke;
@@ -86,6 +88,8 @@ namespace PaintingsGenerator {
 
                 if (lastDiff.ScaledDiff <= diffToStop) break;
             }
+
+            saver.EndWrite();
         }
 
         private async Task WaitForEvent() {
