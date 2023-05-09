@@ -5,10 +5,7 @@ namespace PaintingsGenerator.StrokesLib {
     internal static class LibStrokeParamsManager {
         public static StrokeParameters GetParameters<ColorProducer>(LibStroke<ColorProducer> libStroke)
                 where ColorProducer : IColorProducer, new() {
-            return new(
-                (double)libStroke.Length / libStroke.Width,
-                libStroke.Curvature
-            );
+            return new(libStroke.Length, libStroke.Width, libStroke.Curvature);
         }
     }
 }
