@@ -44,7 +44,8 @@ namespace PaintingsGenerator {
             };
 
             if (fileDialog.ShowDialog() == true) {
-                var template = new BitmapImage(new(fileDialog.FileName));
+                var template = new LocalBitmap(fileDialog.FileName,
+                                               new BitmapImage(new(fileDialog.FileName)));
                 if (template.CanFreeze) template.Freeze();
 
                 ChangePage(imgGenButton);
