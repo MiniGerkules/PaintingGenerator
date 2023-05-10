@@ -13,7 +13,6 @@ namespace PaintingsGenerator.StrokesLib {
         private static readonly string pathToDatabase = @"./StrokesLib/library.strokes";
 
         private static readonly Dictionary<StrokeParameters, LibStroke<RGBAProducer>> strokesLib = new();
-        private static readonly PropertyInfo[] strokeParametersProps = typeof(StrokeParameters).GetProperties();
 
         public static void LoadStrokesLib() {
             if (File.Exists(pathToDatabase)) {
@@ -30,11 +29,11 @@ namespace PaintingsGenerator.StrokesLib {
             var bestDiff = GetDiff(best, toDraw);
 
             foreach (var strokeParams in allStrokeParams.Skip(1)) {
-                double diff = GetDiff(strokeParams, toDraw);
+                double curDiff = GetDiff(strokeParams, toDraw);
 
-                if (diff*diff < bestDiff*bestDiff) {
+                if (curDiff < bestDiff) {
                     best = strokeParams;
-                    bestDiff = diff;
+                    bestDiff = curDiff;
                 }
             }
 
@@ -68,13 +67,8 @@ namespace PaintingsGenerator.StrokesLib {
         private static double GetDiff(StrokeParameters params1, StrokeParameters params2) {
             double diff = 0;
 
-            foreach (var prop in strokeParametersProps) {
-                var val1 = prop.GetValue(params1);
-                var val2 = prop.GetValue(params2);
-                if (val1 == null || val2 == null) continue;
-
-                diff += (double)val1 - (double)val2;
-            }
+            diff += Math.Pow(params1.WidthToLength - params2.WidthToLength, 2);
+            diff += Math.Pow(params1.Curvature - params2.Curvature, 2);
 
             return diff;
         }
